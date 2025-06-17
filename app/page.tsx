@@ -371,12 +371,12 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                 <Badge
                   variant="secondary"
                   className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hidden sm:inline-flex"
                 >
-                  <MessageCircle className="w-3 h-3 mr-1" />
+                  <MessageCircle className="w-3 h-3 mr-2" />
                   {messages.length}
                 </Badge>
                 <Button
@@ -399,7 +399,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors p-1"
+                  className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors p-2"
                   asChild
                 >
                   <a
@@ -426,10 +426,10 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     >
                       <CurrentModeIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${currentMode.color}`} />
                     </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      What can I help you {mode === "general" ? "with" : `${mode === "creative" ? "create" : mode}`}?
+                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                      What can I help you with {mode === "general" ? "AI" : `${mode === "creative" ? "create" : mode}`}?
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto px-2 sm:px-4">
+                    <p className="text-s sm:text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto px-2 sm:px-4">
                       I'm your {currentMode.label.toLowerCase()} assistant. Ask me anything or use the quick actions to get started. 
                       <br />
                       <br />
@@ -442,7 +442,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                       <button
                         key={index}
                         onClick={() => handleQuickAction(action)}
-                        className="px-2.5 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
+                        className="px-2.5 py-1.5 text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
                       >
                         {action}
                       </button>
@@ -459,9 +459,9 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                   >
                     {message.role === "assistant" && (
                       <div
-                        className={`flex-shrink-0 w-6 h-6 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
+                        className={`flex-shrink-0 w-8 h-8 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
                       >
-                        <CurrentModeIcon className={`w-3 h-3 ${currentMode.color}`} />
+                        <CurrentModeIcon className={`w-6 h-6 ${currentMode.color}`} />
                       </div>
                     )}
                     <div
@@ -474,7 +474,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                           }`}
                       >
                         {message.role === "user" ? (
-                          <div className="text-[11p] sm:text-sm break-words">{message.content}</div>
+                          <div className="text-s sm:text-sm break-words">{message.content}</div>
                         ) : (
                           <div className="prose prose-sm max-w-none dark:prose-invert">
                             <ReactMarkdown components={MarkdownComponents}>{message.content}</ReactMarkdown>
@@ -488,8 +488,8 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                       </div>
                     </div>
                     {message.role === "user" && (
-                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
-                        <User className="w-3 h-3 text-white" />
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                        <User className="w-5 h-5 text-white" />
                       </div>
                     )}
                   </div>
@@ -548,13 +548,13 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     variant="ghost"
                     size="sm"
                     onClick={handleVoiceInput}
-                    className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 p-1 ${isListening
+                    className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 p-2 ${isListening
                         ? "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 dark:bg-red-900/20"
                         : "text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     disabled={isLoading}
                   >
-                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                   </Button>
                   <Button
                     type="submit"
@@ -562,7 +562,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     disabled={isLoading || !input.trim()}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 sm:p-2"
                   >
-                    <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
               </form>
