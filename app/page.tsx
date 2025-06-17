@@ -92,41 +92,56 @@ const QUICK_ACTIONS = {
 
 import type { Components } from "react-markdown"
 
+// mobile responsiveness
 const MarkdownComponents: Components = {
-  h1: ({ children }) => <h1 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-gray-900 dark:text-gray-100">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">{children}</h3>,
-  p: ({ children }) => <p className="mb-3 last:mb-0 text-gray-700 dark:text-gray-300 leading-relaxed">{children}</p>,
+  h1: ({ children }) => (
+    <h1 className="text-base lg:text-lg font-semibold mb-2 lg:mb-3 text-gray-900 dark:text-gray-100">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-sm lg:text-base font-semibold mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-xs lg:text-sm font-semibold mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100">{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p className="mb-2 lg:mb-3 last:mb-0 text-sm lg:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+      {children}
+    </p>
+  ),
   ul: ({ children }) => (
-    <ul className="list-disc list-inside mb-3 space-y-1 text-gray-700 dark:text-gray-300">{children}</ul>
+    <ul className="list-disc list-inside mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300">
+      {children}
+    </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal list-inside mb-3 space-y-1 text-gray-700 dark:text-gray-300">{children}</ol>
+    <ol className="list-decimal list-inside mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300">
+      {children}
+    </ol>
   ),
-  li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
+  li: ({ children }) => <li className="text-sm lg:text-base text-gray-700 dark:text-gray-300">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
   em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
   code: ({ children, className }) => {
     const isInline = !className?.includes("language-")
     return isInline ? (
-      <code className="bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+      <code className="bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs lg:text-sm font-mono text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
         {children}
       </code>
     ) : (
-      <code className="block bg-gray-100 dark:bg-gray-900 p-3 rounded-lg text-sm font-mono overflow-x-auto text-gray-900 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
+      <code className="block bg-gray-100 dark:bg-gray-900 p-2 lg:p-3 rounded-lg text-xs lg:text-sm font-mono overflow-x-auto text-gray-900 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
         {children}
       </code>
     )
   },
   pre: ({ children }) => (
-    <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg mb-3 overflow-x-auto border border-gray-200 dark:border-gray-700">
+    <pre className="bg-gray-100 dark:bg-gray-900 p-2 lg:p-3 rounded-lg mb-2 lg:mb-3 overflow-x-auto border border-gray-200 dark:border-gray-700">
       {children}
     </pre>
   ),
   blockquote: ({ children, ...props }) => (
     <blockquote
       {...props}
-      className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic mb-3 text-gray-600 dark:text-gray-400"
+      className="border-l-4 border-gray-300 dark:border-gray-600 pl-3 lg:pl-4 italic mb-2 lg:mb-3 text-sm lg:text-base text-gray-600 dark:text-gray-400"
     >
       {children}
     </blockquote>
@@ -147,7 +162,7 @@ export default function AriaAssistant() {
   const [mode, setMode] = useState<Mode>("general")
   const [darkMode, setDarkMode] = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
+  const [recognition, setRecognition] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -173,13 +188,13 @@ export default function AriaAssistant() {
       recognitionInstance.interimResults = false
       recognitionInstance.lang = "en-US"
 
-      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      recognitionInstance.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript
         setInput(transcript)
         setIsListening(false)
       }
 
-      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognitionInstance.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error)
         setIsListening(false)
       }
@@ -237,7 +252,7 @@ export default function AriaAssistant() {
 
   return (
     <div className={`min-h-screen ${darkMode ? "dark bg-gray-950" : "bg-gray-50"} transition-colors duration-200`}>
-      <div className="flex h-screen">
+      <div className="flex h-screen max-h-screen overflow-hidden">
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div
@@ -249,18 +264,18 @@ export default function AriaAssistant() {
         {/* Sidebar */}
         <div
           className={`
-  fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transform transition-transform duration-300 ease-in-out
-  ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transform transition-transform duration-300 ease-in-out overflow-y-auto
+${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
 `}
         >
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold bg-gradient-to-l from-indigo-700 via-blue-700 to-blue-600 bg-clip-text text-transparent">
+                <h1 className="text-base lg:text-lg font-semibold bg-gradient-to-l from-indigo-700 via-blue-700 to-blue-600 bg-clip-text text-transparent">
                   RADHIKA
                 </h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400">AI Assistant</p>
@@ -289,7 +304,10 @@ export default function AriaAssistant() {
                 return (
                   <button
                     key={key}
-                    onClick={() => setMode(key as Mode)}
+                    onClick={() => {
+                      setMode(key as Mode)
+                      setIsMobileMenuOpen(false)
+                    }}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
                         ? `${modeData.bg} ${modeData.color} ${modeData.border} border`
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -314,7 +332,10 @@ export default function AriaAssistant() {
               {QUICK_ACTIONS[mode].map((action, index) => (
                 <button
                   key={index}
-                  onClick={() => handleQuickAction(action)}
+                  onClick={() => {
+                    handleQuickAction(action)
+                    setIsMobileMenuOpen(false)
+                  }}
                   className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   {action}
@@ -325,16 +346,16 @@ export default function AriaAssistant() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:ml-0">
+        <div className="flex-1 flex flex-col lg:ml-0 overflow-hidden">
           {/* Chat Header */}
-          <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4">
+          <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-6 py-2 sm:py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
+                  className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 p-1"
                 >
                   <Menu className="w-4 h-4" />
                 </Button>
@@ -345,7 +366,7 @@ export default function AriaAssistant() {
                   <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                     {currentMode.label} Assistant
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate hidden sm:block">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate hidden sm:block">
                     {currentMode.description}
                   </p>
                 </div>
@@ -355,30 +376,30 @@ export default function AriaAssistant() {
                   variant="secondary"
                   className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hidden sm:inline-flex"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 mr-1" />
+                  <MessageCircle className="w-3 h-3 mr-1" />
                   {messages.length}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setDarkMode(!darkMode)}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 p-1"
                 >
-                  {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearChat}
                   disabled={messages.length === 0}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 p-1"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                  className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors p-1"
                   asChild
                 >
                   <a
@@ -396,21 +417,21 @@ export default function AriaAssistant() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-            <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+            <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 sm:py-6">
               {messages.length === 0 && (
                 <>
-                  <div className="text-center py-8 sm:py-12">
+                  <div className="text-center py-6 sm:py-10">
                     <div
-                      className={`inline-flex p-3 sm:p-4 rounded-2xl ${currentMode.bg} ${currentMode.border} border mb-4 sm:mb-6`}
+                      className={`inline-flex p-2.5 sm:p-4 rounded-2xl ${currentMode.bg} ${currentMode.border} border mb-3 sm:mb-6`}
                     >
-                      <CurrentModeIcon className={`w-6 h-6 sm:w-8 sm:h-8 ${currentMode.color}`} />
+                      <CurrentModeIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${currentMode.color}`} />
                     </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       What can I help you {mode === "general" ? "with" : `${mode === "creative" ? "create" : mode}`}?
                     </h3>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto px-4">
-                      I'm your {currentMode.label.toLowerCase()} assistant. Ask me anything or use the quick actions to
-                      get started. <br />
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto px-2 sm:px-4">
+                      I'm your {currentMode.label.toLowerCase()} assistant. Ask me anything or use the quick actions to get started. 
+                      <br />
                       <br />
                       Use keywords 'analyze', 'explain', 'compare', 'plan', 'strategy', 'decision', 'problem',
                       'creative', 'brainstorm', 'idea', 'write', 'design', 'story' to guide me in the right direction.
@@ -421,7 +442,7 @@ export default function AriaAssistant() {
                       <button
                         key={index}
                         onClick={() => handleQuickAction(action)}
-                        className="px-3 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
+                        className="px-2.5 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
                       >
                         {action}
                       </button>
@@ -430,93 +451,90 @@ export default function AriaAssistant() {
                 </>
               )}
 
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-5">
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex space-x-2 sm:space-x-4 ${message.role === "user" ? "justify-end" : ""}`}
+                    className={`flex space-x-2 sm:space-x-3 ${message.role === "user" ? "justify-end" : ""}`}
                   >
                     {message.role === "assistant" && (
                       <div
-                        className={`flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
+                        className={`flex-shrink-0 w-6 h-6 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
                       >
-                        <CurrentModeIcon className={`w-3 h-3 sm:w-4 sm:h-4 ${currentMode.color}`} />
+                        <CurrentModeIcon className={`w-3 h-3 ${currentMode.color}`} />
                       </div>
                     )}
                     <div
-                      className={`flex-1 max-w-[85%] sm:max-w-3xl ${message.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}`}
+                      className={`flex-1 max-w-[80%] sm:max-w-[85%] ${message.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}`}
                     >
                       <div
-                        className={`px-3 sm:px-4 py-2 sm:py-3 rounded-2xl ${message.role === "user"
+                        className={`px-3 py-2 rounded-2xl ${message.role === "user"
                             ? "bg-blue-600 text-white max-w-full"
                             : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100"
                           }`}
                       >
                         {message.role === "user" ? (
-                          <div className="text-sm break-words">{message.content}</div>
+                          <div className="text-[11p] sm:text-sm break-words">{message.content}</div>
                         ) : (
-                          <div className="prose prose-sm max-w-none prose-invert">
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
                             <ReactMarkdown components={MarkdownComponents}>{message.content}</ReactMarkdown>
                           </div>
                         )}
                       </div>
                       <div
-                        className={`text-xs text-gray-500 mt-1 ${message.role === "user" ? "text-right" : "text-left"}`}
+                        className={`text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 ${message.role === "user" ? "text-right" : "text-left"}`}
                       >
                         {formatTime(message.createdAt ? new Date(message.createdAt).getTime() : Date.now())}
                       </div>
                     </div>
                     {message.role === "user" && (
-                      <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                        <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
+                        <User className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </div>
                 ))}
-
-                {isLoading && (
-                  <div className="flex space-x-2 sm:space-x-4">
-                    <div
-                      className={`flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
-                    >
-                      <CurrentModeIcon className={`w-3 h-3 sm:w-4 sm:h-4 ${currentMode.color}`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" />
-                            <div
-                              className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                              style={{ animationDelay: "0.1s" }}
-                            />
-                            <div
-                              className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                              style={{ animationDelay: "0.2s" }}
-                            />
-                          </div>
-                          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                            Radhika is thinking...
-                          </span>
+              </div>
+              {isLoading && (
+                <div className="flex space-x-2 sm:space-x-3">
+                  <div
+                    className={`flex-shrink-0 w-6 h-6 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center`}
+                  >
+                    <CurrentModeIcon className={`w-3 h-3 ${currentMode.color}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-2 rounded-2xl">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" />
+                          <div
+                            className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          />
+                          <div
+                            className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          />
                         </div>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Radhika is thinking...</span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-              <div ref={messagesEndRef} />
+                </div>
+              )}
             </div>
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
-          <div className="bg-white bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-3 sm:p-6">
+          <div className="bg-white bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-2 sm:p-4">
             <div className="max-w-4xl mx-auto">
               <form onSubmit={handleSubmit} className="relative">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
                   placeholder={currentMode.placeholder}
-                  className="min-h-[50px] sm:min-h-[60px] max-h-32 resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-0 pr-20 sm:pr-24 text-sm sm:text-base"
+                  className="min-h-[40px] sm:min-h-[50px] max-h-28 resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-gray-400 dark:focus:border-gray-600 focus:ring-0 pr-16 sm:pr-20 text-xs sm:text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault()
@@ -524,22 +542,19 @@ export default function AriaAssistant() {
                     }
                   }}
                 />
-                <div className="absolute right-2 bottom-2 flex items-center space-x-1 sm:space-x-2">
+                <div className="absolute right-1.5 bottom-1.5 flex items-center space-x-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleVoiceInput}
-                    className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 p-1.5 sm:p-2 ${isListening
-                      ? "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 dark:bg-red-900/20"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                    className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 p-1 ${isListening
+                        ? "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 dark:bg-red-900/20"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
                     disabled={isLoading}
                   >
-                    {isListening ? (
-                      <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />
-                    ) : (
-                      <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
-                    )}
+                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
                   </Button>
                   <Button
                     type="submit"
@@ -551,7 +566,7 @@ export default function AriaAssistant() {
                   </Button>
                 </div>
               </form>
-              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+              <div className="flex items-center justify-between mt-1 text-[10px] sm:text-xs text-gray-500">
                 <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
                 <span className="sm:hidden">Tap to send</span>
                 <span className={`${currentMode.color} font-medium`}>{currentMode.label} mode</span>
