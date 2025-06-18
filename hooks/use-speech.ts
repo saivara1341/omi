@@ -84,7 +84,7 @@ export function useSpeech() {
       // Detect language
       const isHindiScript = /[\u0900-\u097F]/.test(cleanedText);
       const isHinglish =
-        /\b(mera|tum|kya|hai|nahi|kaise|acha|haan|nahi|kyun|main|sab|pyaar|dil|kaisi|kyu|batao|btao|suno|aise|vaise|ni|nhi|kyu|achaa|acha|baat|mujhe|tumhe)\b/i.test(
+        /\b(mera|tum|kya|hai|nahi|kaise|acha|haan|nahi|kyun|main|sab|pyaar|dil|kaisi|kyu|batao|btao|suno|aise|vaise|ni|nhi|kyu|achaa|acha|baat|mujhe|tumhe|kon|kahan|kaha)\b/i.test(
           cleanedText
         );
       const isHindi = isHindiScript || isHinglish;
@@ -108,7 +108,7 @@ export function useSpeech() {
         selectedVoice =
           voices.find((v) => v.lang === "en-IN") ??
           voices.find((v) =>
-            ["zira", "karen", "samantha", "female", "woman", "española"].some((name) =>
+            ["swara", "maya", "kajal", "padma", "zira", "karen", "samantha", "female", "woman", "española"].some((name) =>
               v.name.toLowerCase().includes(name)
             )
           ) ??
