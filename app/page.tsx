@@ -286,6 +286,7 @@ export default function FuturisticRadhika() {
   const chatConfig = useMemo(
     () => ({
       api: "/api/chat",
+      experimental_throttle: 50, // Throttle UI updates to prevent infinite loops
       body: {
         mode,
         provider,
@@ -294,22 +295,6 @@ export default function FuturisticRadhika() {
           : provider === "claude" && apiKeys.claude
             ? { apiKey: apiKeys.claude }
             : {}),
-      },
-      onError: (error: Error) => {
-        console.error("Chat error details:", error)
-        const errorMessage = error.message || "Failed to send message. Please try again."
-        setError(errorMessage)
-
-        // If it's an API key error, suggest setting up the API key
-        if (errorMessage.includes("API configuration error") || errorMessage.includes("API key")) {
-          setError(`${errorMessage} Please set up your ${PROVIDERS[provider].name} API key.`)
-        }
-      },
-      onFinish: (message: any) => {
-        setError(null)
-        if (voiceEnabled && message.content) {
-          speakMessage(message.content)
-        }
       },
     }),
     [mode, provider, apiKeys.openai, apiKeys.claude, voiceEnabled, speakMessage],
@@ -474,11 +459,35 @@ export default function FuturisticRadhika() {
     }
   }, [isProviderMenuOpen])
 
+  // Handle chat errors
+  const handleChatError = useCallback(
+    (error: Error) => {
+      console.error("Chat error details:", error)
+      const errorMessage = error.message || "Failed to send message. Please try again."
+      setError(errorMessage)
+
+      // If it's an API key error, suggest setting up the API key
+      if (errorMessage.includes("API configuration error") || errorMessage.includes("API key")) {
+        setError(`${errorMessage} Please set up your ${PROVIDERS[provider].name} API key.`)
+      }
+    },
+    [provider],
+  )
+
+  // Handle chat finish
+  const handleChatFinish = useCallback(
+    (message: any) => {
+      setError(null)
+      if (voiceEnabled && message.content) {
+        speakMessage(message.content)
+      }
+    },
+    [voiceEnabled, speakMessage],
+  )
+
   return (
-    <div
-      className={`min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200`}
-    >
-      <div className="flex h-screen max-h-screen overflow-hidden">
+    <div className="h-screen overflow-hidden bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      <div className="flex h-full">
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div
@@ -585,9 +594,9 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:ml-0 overflow-hidden">
-          {/* Chat Header */}
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-cyan-500/20 px-3 sm:px-6 py-2 sm:py-4">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Chat Header - Fixed */}
+          <div className="flex-shrink-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-cyan-500/20 px-3 sm:px-6 py-2 sm:py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                 <Button
@@ -687,7 +696,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
             </div>
           )}
 
-          {/* Messages */}
+          {/* Messages - Scrollable */}
           <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent">
             <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 sm:py-6">
               {messages.length === 0 && (
@@ -798,14 +807,14 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           </div>
 
           {/* Input */}
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-cyan-500/20 p-2 sm:p-4">
+          <div className="flex-shrink-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-cyan-500/20 p-2 sm:p-4">
             <div className="max-w-4xl mx-auto">
               <form onSubmit={handleSubmit} className="relative">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
                   placeholder={currentMode.placeholder}
-                  className="min-h-[40px] sm:min-h-[50px] max-h-28 resize-none bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border-gray-300 dark:border-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-500 focus:border-cyan-500/50 focus:ring-0 pr-20 sm:pr-24 text-xs sm:text-sm"
+                  className="min-h-[50px] sm:min-h-[60px] max-h-32 resize-none bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border-gray-300 dark:border-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-500 focus:border-cyan-500/50 focus:ring-0 pr-20 sm:pr-24 text-base sm:text-lg leading-relaxed"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault()
