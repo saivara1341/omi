@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/RS-labhub/radhika/main/public/logo.jpg" alt="logo" width="600" />
+  <img src="https://github.com/RS-labhub/radhika/blob/master/public/logo.jpg" alt="logo" width="600" />
 </p>
 
 # RADHIKA - Adaptive Reasoning & Intelligence Assistant
