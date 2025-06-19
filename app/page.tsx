@@ -535,10 +535,11 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                   <button
                     key={key}
                     onClick={() => handleModeChange(key as Mode)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive
                         ? `${modeData.bg} ${modeData.color} ${modeData.border} border shadow-lg ${modeData.glow}`
                         : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center space-x-3">
                       <ModeIcon className="w-4 h-4" />
@@ -686,7 +687,7 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent max-h-[80vh] sm:max-h-full">
+          <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent">
             <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 sm:py-6">
               {messages.length === 0 && (
                 <>
@@ -736,10 +737,11 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                       className={`flex-1 max-w-[80%] sm:max-w-[85%] ${message.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}`}
                     >
                       <div
-                        className={`px-3 py-2 rounded-2xl ${message.role === "user"
+                        className={`px-3 py-2 rounded-2xl ${
+                          message.role === "user"
                             ? `bg-gradient-to-r ${currentMode.gradient} text-white max-w-full shadow-lg ${currentMode.glow}`
                             : "bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 text-gray-900 dark:text-gray-100"
-                          }`}
+                        }`}
                       >
                         {message.role === "user" ? (
                           <div className="text-sm break-words">{message.content}</div>
@@ -827,10 +829,11 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     variant="ghost"
                     size="sm"
                     onClick={handleVoiceInput}
-                    className={`rounded-xl p-2 transition-all duration-200 ${isListening
+                    className={`rounded-xl p-2 transition-all duration-200 ${
+                      isListening
                         ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 animate-pulse"
                         : "text-gray-600 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                      }`}
+                    }`}
                     disabled={isLoading}
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -866,14 +869,15 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                         className="h-6 px-2 text-xs flex items-center gap-1 font-medium rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
                         <span
-                          className={`${provider === "groq"
+                          className={`${
+                            provider === "groq"
                               ? "text-cyan-700 dark:text-cyan-400"
                               : provider === "gemini"
                                 ? "text-emerald-700 dark:text-emerald-400"
                                 : provider === "openai"
                                   ? "text-violet-700 dark:text-violet-400"
                                   : "text-orange-700 dark:text-orange-400"
-                            }`}
+                          }`}
                         >
                           {PROVIDERS[provider].name}
                         </span>
