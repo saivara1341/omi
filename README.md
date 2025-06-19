@@ -323,7 +323,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/RS-labhub/radhika/issues)
 - **Discussions**: Join conversations on [GitHub Discussions](https://github.com/RS-labhub/radhika/discussions)
 - **Email**: Contact the maintainer at `rs4101976@gmail.com`
-- **Twitter**: Follow updates [@RS_labhub](https://x.com/rrs00179)
+- **X/Twitter**: Follow updates [@rrs00179](https://x.com/rrs00179)
 
 ## 🚀 Deployment
 
