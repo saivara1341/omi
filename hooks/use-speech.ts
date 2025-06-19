@@ -40,9 +40,7 @@ export function useSpeech() {
         setIsListening(false);
       };
 
-      recognitionInstance.onend = () => {
-        setIsListening(false);
-      };
+      recognitionInstance.onend = () => setIsListening(false);
 
       recognitionRef.current = recognitionInstance;
     } else {
@@ -52,6 +50,9 @@ export function useSpeech() {
     // Speech Synthesis
     if ("speechSynthesis" in window) {
       synthesisRef.current = window.speechSynthesis;
+
+      // Force voice preload
+      window.speechSynthesis.getVoices();
     } else {
       setError("Speech synthesis is not supported in your browser.");
     }
@@ -64,14 +65,19 @@ export function useSpeech() {
       return;
     }
 
-    // Cancel any ongoing speech
+    // Cancel ongoing speech
     synthesis.cancel();
 
-    // Remove emojis from the text
+    // Clean text
     const cleanedText = text.replace(
       /[\p{Emoji_Presentation}\p{Emoji}\u200D]+/gu,
       ""
-    );
+    ).trim();
+
+    if (!cleanedText) {
+      // console.warn("Skipping empty or emoji-only speech input.");
+      return;
+    }
 
     const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.rate = 1.2;
@@ -83,10 +89,7 @@ export function useSpeech() {
 
       // Detect language
       const isHindiScript = /[\u0900-\u097F]/.test(cleanedText);
-      const isHinglish =
-        /\b(mera|tum|kya|hai|nahi|kaise|acha|haan|nahi|kyun|main|sab|pyaar|dil|kaisi|kyu|batao|btao|suno|aise|vaise|ni|nhi|kyu|achaa|acha|baat|mujhe|tumhe|kon|kahan|kaha)\b/i.test(
-          cleanedText
-        );
+      const isHinglish = /\b(mera|tum|kya|hai|nahi|kaise|acha|haan|kyun|main|sab|pyaar|dil|kaisi|batao|suno|aise|vaise|ni|nhi|achaa|baat|mujhe|tumhe|kon|kahan)\b/i.test(cleanedText);
       const isHindi = isHindiScript || isHinglish;
       const isSpanish = /[ñáéíóúü]/i.test(cleanedText);
       const isFrench = /[àâäéèêëïîôöùûüÿç]/i.test(cleanedText);
@@ -96,7 +99,7 @@ export function useSpeech() {
       if (isHindi) {
         selectedVoice = voices.find(v => v.lang === "hi-IN")
           ?? voices.find(v => v.lang === "en-IN")
-          ?? null
+          ?? null;
       } else if (isSpanish) {
         selectedVoice = voices.find(v => v.lang.startsWith("es")) ?? null;
       } else if (isFrench) {
@@ -140,7 +143,7 @@ export function useSpeech() {
     } else {
       selectVoice();
     }
-  }, []);
+  }, [isSpeaking]);
 
   const stopSpeaking = useCallback(() => {
     const synthesis = synthesisRef.current;
