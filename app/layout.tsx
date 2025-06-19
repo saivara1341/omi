@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Radhika AI Chatbot',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: 'Radhika',
     description:
       'Radhika is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
-    images: ['/og-image.png'],
+    images: ['/og-image.jpg'],
   },
 }
 
