@@ -1,9 +1,16 @@
-<p align="center">
-  <img src="https://github.com/RS-labhub/radhika/blob/master/public/logo.jpg" alt="logo" width="600" />
-</p>
+![banner](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/banner.png)
 
 # RADHIKA - Adaptive Reasoning & Intelligence Assistant
 A sophisticated AI-powered assistant built with Next.js and powered by multiple LLM providers including Groq, Gemini, OpenAI, and Claude. RADHIKA adapts to different modes of interaction, providing specialized assistance for productivity, wellness, learning, creative tasks, and even acts as your GenZ bestie!
+
+## 🎬 Project Showcase
+
+| Preview             | Description        |
+|---------------------|--------------------|
+| [![YouTube Demo](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/youtube.jpg)](https://www.youtube.com/watch?v=2FW6IJeOkzI) | 🎬 **YouTube Demo**<br>Click the image to watch the full demo. |
+| ![Blog Post](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/cover-image.png) | 📝 **Blog Post**<br>Read the blog for in-depth explanation. |
+
+
 
 ## ✨ Features
 
@@ -95,7 +102,7 @@ if (query.includes("analyze", "compare", "plan", "strategy", "decision", "proble
 
 // Use creative model for artistic and innovative tasks
 if (query.includes("creative", "brainstorm", "idea", "write", "design", "story")) {
-  modelType = "creative"; // llama-3.1-70b-versatile
+  modelType = "creative"; // qwen/qwen3-32b
 }
 ```
 
@@ -239,7 +246,7 @@ const MODELS = {
   groq: {
     fast: "llama-3.1-8b-instant",
     reasoning: "llama-3.3-70b-versatile", 
-    creative: "llama-3.1-70b-versatile"
+    creative: "qwen/qwen3-32b"
   },
   gemini: { default: "gemini-2.0-flash" },
   openai: { default: "gpt-4o" },
