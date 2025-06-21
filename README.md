@@ -332,13 +332,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Email**: Contact the maintainer at `rs4101976@gmail.com`
 - **X/Twitter**: Follow updates [@rrs00179](https://x.com/rrs00179)
 
-## 🚀 Deployment
-
-### **Vercel (Recommended)**
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on every push
-
 
 ## 🔮 Roadmap
 
@@ -353,6 +346,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] **Compression**: Optimized message storage and transmission
 
 ---
+
+## Meet the Author
+
+<img  src="https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/Author.jpg" alt="Author">
 
 <div align="center">
 
