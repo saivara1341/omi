@@ -8,7 +8,7 @@ A sophisticated AI-powered assistant built with Next.js and powered by multiple 
 | Preview             | Description        |
 |---------------------|--------------------|
 | [![YouTube Demo](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/youtube.jpg)](https://www.youtube.com/watch?v=2FW6IJeOkzI) | 🎬 **YouTube Demo**<br>Click the image to watch the full demo. |
-| ![Blog Post](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/cover-image.png) | 📝 **Blog Post**<br>Read the blog for in-depth explanation. |
+| [![Blog Post](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/cover-image.png)](https://dev.to/rohan_sharma/creating-a-chatbot-from-scratch-and-vibe-coding-the-ui-1bij) | 📝 **Blog Post**<br>Read the blog for in-depth explanation. |
 
 
 
