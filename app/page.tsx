@@ -49,6 +49,8 @@ import { AIVisualization } from "@/components/ai-visualization"
 import { ActivityMatrix } from "@/components/activity-matrix"
 import { useSpeech } from "@/hooks/use-speech"
 import "../styles/globals.css"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 type Mode = "general" | "productivity" | "wellness" | "learning" | "creative" | "bff"
 type Provider = "groq" | "gemini" | "openai" | "claude"
@@ -546,6 +548,7 @@ export default function FuturisticRadhika() {
   }, [isProviderMenuOpen])
 
   return (
+    <>
     <div
       className={`h-screen overflow-hidden transition-colors duration-200 ${uiStyle === "pixel"
         ? "bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pixel-font"
@@ -1352,5 +1355,8 @@ ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         }
       `}</style>
     </div>
+    <Analytics />
+    <SpeedInsights />
+    </>
   )
 }
