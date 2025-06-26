@@ -133,6 +133,21 @@ function isValidApiKey(key: string | undefined, provider: string): boolean {
   }
 }
 
+// Helper function to get available providers
+function getAvailableProviders(): string[] {
+  const available = []
+  
+  if (isValidApiKey(process.env.GROQ_API_KEY, 'groq')) {
+    available.push('groq')
+  }
+  
+  if (isValidApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'gemini')) {
+    available.push('gemini')
+  }
+  
+  return available
+}
+
 export async function POST(req: Request) {
   try {
     console.log("=== Chat API Request Started ===")
@@ -165,6 +180,33 @@ export async function POST(req: Request) {
 
     const systemPrompt = SYSTEM_PROMPTS[mode as keyof typeof SYSTEM_PROMPTS] || SYSTEM_PROMPTS.general
 
+    // Check available providers and suggest alternatives
+    const availableProviders = getAvailableProviders()
+    
+    // If requested provider is not available, suggest alternatives
+    if (provider === "groq" && !isValidApiKey(process.env.GROQ_API_KEY, 'groq')) {
+      if (availableProviders.length > 0) {
+        return Response.json(
+          { 
+            error: "Groq API key is missing or invalid",
+            details: `Please set up your Groq API key or try switching to: ${availableProviders.join(', ')}`,
+            availableProviders,
+            suggestedAction: "setup_api_key"
+          },
+          { status: 401 },
+        )
+      } else {
+        return Response.json(
+          { 
+            error: "No API keys configured",
+            details: "Please set up at least one API key (Groq or Gemini offer free tiers). Get your free Groq API key from https://console.groq.com/ or Gemini key from https://makersuite.google.com/app/apikey",
+            suggestedAction: "setup_api_key"
+          },
+          { status: 401 },
+        )
+      }
+    }
+
     // Handle Gemini requests
     if (provider === "gemini") {
       const geminiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
@@ -173,7 +215,8 @@ export async function POST(req: Request) {
         return Response.json(
           { 
             error: "Gemini API key is missing or invalid. Please set up your Gemini API key in the settings.",
-            details: "Get your free API key from https://makersuite.google.com/app/apikey"
+            details: "Get your free API key from https://makersuite.google.com/app/apikey",
+            suggestedAction: "setup_api_key"
           },
           { status: 401 },
         )
@@ -200,7 +243,8 @@ export async function POST(req: Request) {
           return Response.json(
             {
               error: "Invalid Gemini API key. Please check your API key in the settings.",
-              details: "Get your free API key from https://makersuite.google.com/app/apikey"
+              details: "Get your free API key from https://makersuite.google.com/app/apikey",
+              suggestedAction: "setup_api_key"
             },
             { status: 401 },
           )
@@ -222,7 +266,8 @@ export async function POST(req: Request) {
         console.error("Invalid or missing OpenAI API key")
         return Response.json({ 
           error: "OpenAI API key is missing or invalid. Please set up your OpenAI API key in the settings.",
-          details: "Get your API key from https://platform.openai.com/api-keys"
+          details: "Get your API key from https://platform.openai.com/api-keys",
+          suggestedAction: "setup_api_key"
         }, { status: 401 })
       }
 
@@ -251,7 +296,8 @@ export async function POST(req: Request) {
           return Response.json(
             {
               error: "Invalid OpenAI API key. Please check your API key in the settings.",
-              details: "Get your API key from https://platform.openai.com/api-keys"
+              details: "Get your API key from https://platform.openai.com/api-keys",
+              suggestedAction: "setup_api_key"
             },
             { status: 401 },
           )
@@ -273,7 +319,8 @@ export async function POST(req: Request) {
         console.error("Invalid or missing Claude API key")
         return Response.json({ 
           error: "Claude API key is missing or invalid. Please set up your Claude API key in the settings.",
-          details: "Get your API key from https://console.anthropic.com/"
+          details: "Get your API key from https://console.anthropic.com/",
+          suggestedAction: "setup_api_key"
         }, { status: 401 })
       }
 
@@ -298,7 +345,8 @@ export async function POST(req: Request) {
           return Response.json(
             {
               error: "Invalid Claude API key. Please check your API key in the settings.",
-              details: "Get your API key from https://console.anthropic.com/"
+              details: "Get your API key from https://console.anthropic.com/",
+              suggestedAction: "setup_api_key"
             },
             { status: 401 },
           )
@@ -319,7 +367,8 @@ export async function POST(req: Request) {
         console.error("Invalid or missing GROQ_API_KEY")
         return Response.json({ 
           error: "Groq API key is missing or invalid. Please set up your Groq API key in the settings.",
-          details: "Get your free API key from https://console.groq.com/"
+          details: "Get your free API key from https://console.groq.com/",
+          suggestedAction: "setup_api_key"
         }, { status: 401 })
       }
 
@@ -380,7 +429,8 @@ export async function POST(req: Request) {
           return Response.json(
             {
               error: "Invalid Groq API key. Please check your API key in the settings.",
-              details: "Get your free API key from https://console.groq.com/"
+              details: "Get your free API key from https://console.groq.com/",
+              suggestedAction: "setup_api_key"
             },
             { status: 401 },
           )

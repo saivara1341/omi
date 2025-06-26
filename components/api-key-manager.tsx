@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +30,15 @@ export function ApiKeyManager({ onKeysUpdated }: ApiKeyManagerProps) {
   
   const [saving, setSaving] = useState(false)
 
+  // Load existing keys on mount
+  useEffect(() => {
+    const savedApiKeys = localStorage.getItem("apiKeys")
+    if (savedApiKeys) {
+      const parsedKeys = JSON.parse(savedApiKeys)
+      setKeys(parsedKeys)
+    }
+  }, [])
+
   const handleKeyChange = (provider: string, value: string) => {
     setKeys(prev => ({
       ...prev,
@@ -44,54 +53,24 @@ export function ApiKeyManager({ onKeysUpdated }: ApiKeyManagerProps) {
     }))
   }
 
-  const saveToEnvFile = async () => {
+  const saveApiKeys = async () => {
     setSaving(true)
     
     try {
-      // Create the .env content
-      const envContent = `# API Keys for SAHITI AI Assistant
-# Generated automatically - Do not edit manually
-
-# Required for Groq (free tier available)
-GROQ_API_KEY=${keys.groq || 'your_groq_api_key_here'}
-
-# Required for Gemini (free tier available)
-GOOGLE_GENERATIVE_AI_API_KEY=${keys.gemini || 'your_gemini_api_key_here'}
-
-# Optional: OpenAI API Key
-OPENAI_API_KEY=${keys.openai || 'your_openai_api_key_here'}
-
-# Optional: Claude API Key  
-ANTHROPIC_API_KEY=${keys.claude || 'your_claude_api_key_here'}
-`
-
-      // Save to .env file via API
-      const response = await fetch('/api/save-env', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ envContent })
-      })
-
-      if (response.ok) {
-        // Also save to localStorage for immediate use
-        const apiKeys = {
-          groq: keys.groq,
-          gemini: keys.gemini, 
-          openai: keys.openai,
-          claude: keys.claude
-        }
-        localStorage.setItem('apiKeys', JSON.stringify(apiKeys))
-        
-        toast.success("API keys saved successfully!", {
-          description: "Keys have been saved to .env file and are ready to use."
-        })
-        
-        onKeysUpdated?.()
-      } else {
-        throw new Error('Failed to save to .env file')
+      // Save to localStorage
+      const apiKeys = {
+        groq: keys.groq,
+        gemini: keys.gemini, 
+        openai: keys.openai,
+        claude: keys.claude
       }
+      localStorage.setItem('apiKeys', JSON.stringify(apiKeys))
+      
+      toast.success("API keys saved successfully!", {
+        description: "Keys have been saved and are ready to use."
+      })
+      
+      onKeysUpdated?.()
     } catch (error) {
       console.error('Error saving API keys:', error)
       toast.error("Failed to save API keys", {
@@ -145,7 +124,7 @@ ANTHROPIC_API_KEY=${keys.claude || 'your_claude_api_key_here'}
           API Key Manager
         </CardTitle>
         <CardDescription>
-          Enter your API keys below. They will be saved to your .env file and stored securely.
+          Enter your API keys below. They will be saved securely in your browser.
         </CardDescription>
       </CardHeader>
       
@@ -207,19 +186,19 @@ ANTHROPIC_API_KEY=${keys.claude || 'your_claude_api_key_here'}
 
         <div className="pt-4">
           <Button 
-            onClick={saveToEnvFile} 
+            onClick={saveApiKeys} 
             disabled={saving || (!keys.groq && !keys.gemini && !keys.openai && !keys.claude)}
             className="w-full"
           >
             {saving ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Saving to .env file...
+                Saving API Keys...
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Save API Keys to .env File
+                Save API Keys
               </>
             )}
           </Button>
@@ -230,10 +209,10 @@ ANTHROPIC_API_KEY=${keys.claude || 'your_claude_api_key_here'}
               <div className="text-xs text-blue-800 dark:text-blue-300">
                 <p className="font-medium mb-1">How this works:</p>
                 <ul className="space-y-1 text-xs">
-                  <li>• Keys are saved to your .env file automatically</li>
-                  <li>• Also stored in browser localStorage for immediate use</li>
+                  <li>• Keys are saved securely in your browser's local storage</li>
                   <li>• Groq and Gemini offer free tiers - no payment required</li>
                   <li>• OpenAI and Claude are optional premium providers</li>
+                  <li>• Your keys never leave your device</li>
                 </ul>
               </div>
             </div>

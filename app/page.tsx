@@ -379,6 +379,8 @@ function HomePage() {
         
         // Try to parse the error response for better error messages
         let errorMessage = error.message || "Failed to send message. Please try again."
+        let suggestedAction = null
+        let availableProviders = null
         
         try {
           // Check if the error message contains JSON with more details
@@ -391,6 +393,8 @@ function HomePage() {
               if (errorData.details) {
                 errorMessage += ` ${errorData.details}`
               }
+              suggestedAction = errorData.suggestedAction
+              availableProviders = errorData.availableProviders
             }
           }
         } catch (parseError) {
@@ -401,13 +405,23 @@ function HomePage() {
 
         // Show specific guidance for API key errors
         if (errorMessage.includes("API key") || errorMessage.includes("authentication") || errorMessage.includes("401")) {
-          toast.error("API Key Required", {
-            description: `Please set up your ${PROVIDERS[provider].name} API key in the settings to continue.`,
-            action: {
-              label: "Open Settings",
-              onClick: () => setIsApiKeyDialogOpen(true)
-            }
-          })
+          if (availableProviders && availableProviders.length > 0) {
+            toast.error("API Key Missing", {
+              description: `Try switching to: ${availableProviders.join(', ')} or set up your ${PROVIDERS[provider].name} API key.`,
+              action: {
+                label: "Open Settings",
+                onClick: () => setIsApiKeyDialogOpen(true)
+              }
+            })
+          } else {
+            toast.error("API Key Required", {
+              description: `Please set up your ${PROVIDERS[provider].name} API key in the settings to continue.`,
+              action: {
+                label: "Open Settings",
+                onClick: () => setIsApiKeyDialogOpen(true)
+              }
+            })
+          }
         }
       },
     }),
@@ -777,7 +791,7 @@ function HomePage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{error || speechError}</p>
                 {(error?.includes("API key") || error?.includes("authentication")) && (
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -785,8 +799,23 @@ function HomePage() {
                       className="text-red-800 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
                     >
                       <Settings className="w-3 h-3 mr-1" />
-                      Open API Settings
+                      Setup API Keys
                     </Button>
+                    {error?.includes("Try switching to") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          // Try to switch to Gemini if available
+                          if (error?.includes("gemini")) {
+                            setProvider("gemini")
+                          }
+                        }}
+                        className="text-red-800 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
+                      >
+                        Try Alternative Provider
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
