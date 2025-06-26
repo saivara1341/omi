@@ -383,22 +383,38 @@ function HomePage() {
         let availableProviders = null
         
         try {
-          // Check if the error message contains JSON with more details
-          if (errorMessage.includes('{')) {
-            const jsonStart = errorMessage.indexOf('{')
-            const jsonStr = errorMessage.substring(jsonStart)
-            const errorData = JSON.parse(jsonStr)
-            if (errorData.error) {
-              errorMessage = errorData.error
-              if (errorData.details) {
-                errorMessage += ` ${errorData.details}`
-              }
-              suggestedAction = errorData.suggestedAction
-              availableProviders = errorData.availableProviders
+          // First, try to parse the entire error message as JSON
+          const errorData = JSON.parse(errorMessage)
+          if (errorData.error) {
+            errorMessage = errorData.error
+            if (errorData.details) {
+              errorMessage += ` ${errorData.details}`
             }
+            suggestedAction = errorData.suggestedAction
+            availableProviders = errorData.availableProviders
           }
         } catch (parseError) {
-          // If parsing fails, use the original error message
+          try {
+            // If that fails, try to extract JSON substring by finding the first { and last }
+            const firstBrace = errorMessage.indexOf('{')
+            const lastBrace = errorMessage.lastIndexOf('}')
+            
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              const jsonStr = errorMessage.substring(firstBrace, lastBrace + 1)
+              const errorData = JSON.parse(jsonStr)
+              if (errorData.error) {
+                errorMessage = errorData.error
+                if (errorData.details) {
+                  errorMessage += ` ${errorData.details}`
+                }
+                suggestedAction = errorData.suggestedAction
+                availableProviders = errorData.availableProviders
+              }
+            }
+          } catch (secondParseError) {
+            // If both parsing attempts fail, use the original error message
+            console.warn("Could not parse error message as JSON:", secondParseError)
+          }
         }
 
         setError(errorMessage)
