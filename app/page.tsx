@@ -15,6 +15,7 @@ import { useSpeech } from "@/hooks/use-speech"
 import { ActivityMatrix } from "@/components/activity-matrix"
 import { AIVisualization } from "@/components/ai-visualization"
 import { ButterflyIcon } from "@/components/butterfly-icon"
+import { ApiKeyManager } from "@/components/api-key-manager"
 import ReactMarkdown from "react-markdown"
 import type { Components } from "react-markdown"
 import {
@@ -503,6 +504,17 @@ export default function Home() {
     }))
   }
 
+  // Handle API keys updated from manager
+  const handleApiKeysUpdated = () => {
+    // Reload API keys from localStorage
+    const savedApiKeys = localStorage.getItem("apiKeys")
+    if (savedApiKeys) {
+      const keys = JSON.parse(savedApiKeys)
+      setApiKeys(keys)
+      setTempApiKeys(keys)
+    }
+  }
+
   // Don't render until initialized to prevent hydration issues
   if (!isInitialized) {
     return (
@@ -699,102 +711,14 @@ export default function Home() {
                     <Settings className="w-3.5 h-3.5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <Key className="w-4 h-4" />
-                      API Key Settings
+                      API Key Manager
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Add your API keys to unlock premium AI providers. Keys are stored securely in your browser.
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="groq-key" className="text-sm font-medium">
-                          Groq API Key
-                          <span className="text-green-600 dark:text-green-400 ml-2">(Free tier available)</span>
-                        </Label>
-                        <Input
-                          id="groq-key"
-                          type="password"
-                          placeholder="gsk_..."
-                          value={tempApiKeys.groq || ""}
-                          onChange={(e) => handleApiKeyChange("groq", e.target.value)}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Get your free key at <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">console.groq.com</a>
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="gemini-key" className="text-sm font-medium">
-                          Google Gemini API Key
-                          <span className="text-green-600 dark:text-green-400 ml-2">(Free tier available)</span>
-                        </Label>
-                        <Input
-                          id="gemini-key"
-                          type="password"
-                          placeholder="AIzaSy..."
-                          value={tempApiKeys.gemini || ""}
-                          onChange={(e) => handleApiKeyChange("gemini", e.target.value)}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Get your free key at <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">makersuite.google.com</a>
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="openai-key" className="text-sm font-medium">
-                          OpenAI API Key
-                          <span className="text-amber-600 dark:text-amber-400 ml-2">(Paid)</span>
-                        </Label>
-                        <Input
-                          id="openai-key"
-                          type="password"
-                          placeholder="sk-..."
-                          value={tempApiKeys.openai || ""}
-                          onChange={(e) => handleApiKeyChange("openai", e.target.value)}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">platform.openai.com</a>
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="claude-key" className="text-sm font-medium">
-                          Claude API Key
-                          <span className="text-amber-600 dark:text-amber-400 ml-2">(Paid)</span>
-                        </Label>
-                        <Input
-                          id="claude-key"
-                          type="password"
-                          placeholder="sk-ant-..."
-                          value={tempApiKeys.claude || ""}
-                          onChange={(e) => handleApiKeyChange("claude", e.target.value)}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Get your key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">console.anthropic.com</a>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 pt-4">
-                      <Button onClick={handleSaveApiKeys} className="flex-1">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Keys
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
+                  <ApiKeyManager onKeysUpdated={handleApiKeysUpdated} />
                 </DialogContent>
               </Dialog>
 
