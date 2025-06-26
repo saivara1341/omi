@@ -43,6 +43,8 @@ import {
   AlertCircle,
   X,
   Menu,
+  Settings,
+  Save,
 } from "lucide-react"
 
 type Mode = "general" | "productivity" | "wellness" | "learning" | "creative" | "bff"
@@ -252,6 +254,8 @@ export default function Home() {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
   const [isProviderMenuOpen, setIsProviderMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false)
+  const [tempApiKeys, setTempApiKeys] = useState<Record<string, string>>({})
   const [messagesByMode, setMessagesByMode] = useState<Record<Mode, any[]>>({
     general: [],
     productivity: [],
@@ -303,7 +307,9 @@ export default function Home() {
       // Load API keys
       const savedApiKeys = localStorage.getItem("apiKeys")
       if (savedApiKeys) {
-        setApiKeys(JSON.parse(savedApiKeys))
+        const keys = JSON.parse(savedApiKeys)
+        setApiKeys(keys)
+        setTempApiKeys(keys)
       }
 
       // Load messages for all modes
@@ -482,10 +488,19 @@ export default function Home() {
     return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  // Handle API key setup
-  const handleApiKeySetup = (provider: string, apiKey: string) => {
-    setApiKeys((prev) => ({ ...prev, [provider]: apiKey }))
-    toast.success(`${PROVIDERS[provider as Provider].name} API key saved successfully!`)
+  // Handle API key save
+  const handleSaveApiKeys = () => {
+    setApiKeys(tempApiKeys)
+    setIsApiKeyDialogOpen(false)
+    toast.success("API keys saved successfully!")
+  }
+
+  // Handle API key input change
+  const handleApiKeyChange = (provider: string, value: string) => {
+    setTempApiKeys(prev => ({
+      ...prev,
+      [provider]: value
+    }))
   }
 
   // Don't render until initialized to prevent hydration issues
@@ -671,6 +686,117 @@ export default function Home() {
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
+
+              {/* API Key Settings */}
+              <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50 p-1"
+                    title="API Key Settings"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      API Key Settings
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Add your API keys to unlock premium AI providers. Keys are stored securely in your browser.
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="groq-key" className="text-sm font-medium">
+                          Groq API Key
+                          <span className="text-green-600 dark:text-green-400 ml-2">(Free tier available)</span>
+                        </Label>
+                        <Input
+                          id="groq-key"
+                          type="password"
+                          placeholder="gsk_..."
+                          value={tempApiKeys.groq || ""}
+                          onChange={(e) => handleApiKeyChange("groq", e.target.value)}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Get your free key at <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">console.groq.com</a>
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="gemini-key" className="text-sm font-medium">
+                          Google Gemini API Key
+                          <span className="text-green-600 dark:text-green-400 ml-2">(Free tier available)</span>
+                        </Label>
+                        <Input
+                          id="gemini-key"
+                          type="password"
+                          placeholder="AIzaSy..."
+                          value={tempApiKeys.gemini || ""}
+                          onChange={(e) => handleApiKeyChange("gemini", e.target.value)}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Get your free key at <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">makersuite.google.com</a>
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="openai-key" className="text-sm font-medium">
+                          OpenAI API Key
+                          <span className="text-amber-600 dark:text-amber-400 ml-2">(Paid)</span>
+                        </Label>
+                        <Input
+                          id="openai-key"
+                          type="password"
+                          placeholder="sk-..."
+                          value={tempApiKeys.openai || ""}
+                          onChange={(e) => handleApiKeyChange("openai", e.target.value)}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">platform.openai.com</a>
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="claude-key" className="text-sm font-medium">
+                          Claude API Key
+                          <span className="text-amber-600 dark:text-amber-400 ml-2">(Paid)</span>
+                        </Label>
+                        <Input
+                          id="claude-key"
+                          type="password"
+                          placeholder="sk-ant-..."
+                          value={tempApiKeys.claude || ""}
+                          onChange={(e) => handleApiKeyChange("claude", e.target.value)}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Get your key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline">console.anthropic.com</a>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <Button onClick={handleSaveApiKeys} className="flex-1">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Keys
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <Button
                 variant="ghost"
@@ -920,49 +1046,7 @@ export default function Home() {
                             ) : (
                               providerData.requiresApiKey &&
                               ((key === "openai" && !apiKeys.openai) || (key === "claude" && !apiKeys.claude)) && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Key className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Setup {providerData.name} API Key</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label htmlFor="apiKey">API Key</Label>
-                                        <Input
-                                          id="apiKey"
-                                          type="password"
-                                          placeholder={`Enter your ${providerData.name} API key`}
-                                          onKeyDown={(e) => {
-                                            if (e.key === "Enter") {
-                                              const target = e.target as HTMLInputElement
-                                              if (target.value.trim()) {
-                                                handleApiKeySetup(key, target.value.trim())
-                                                target.value = ""
-                                              }
-                                            }
-                                          }}
-                                        />
-                                      </div>
-                                      <Button
-                                        onClick={(e) => {
-                                          const input = (e.target as HTMLElement)
-                                            .closest(".space-y-4")
-                                            ?.querySelector("input") as HTMLInputElement
-                                          if (input?.value.trim()) {
-                                            handleApiKeySetup(key, input.value.trim())
-                                            input.value = ""
-                                          }
-                                        }}
-                                        className="w-full"
-                                      >
-                                        Save API Key
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                                <Key className="w-3 h-3 text-gray-400 hover:text-gray-600" />
                               )
                             )}
                           </button>
