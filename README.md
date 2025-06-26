@@ -1,14 +1,14 @@
-![banner](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/banner.png)
+![banner](https://raw.githubusercontent.com/RS-labhub/Sahiti/master/public/banner.png)
 
-# RADHIKA - Adaptive Reasoning & Intelligence Assistant
-A sophisticated AI-powered assistant built with Next.js and powered by multiple LLM providers including Groq, Gemini, OpenAI, and Claude. RADHIKA adapts to different modes of interaction, providing specialized assistance for productivity, wellness, learning, creative tasks, and even acts as your GenZ bestie!
+# SAHITI - Adaptive Reasoning & Intelligence Assistant
+A sophisticated AI-powered assistant built with Next.js and powered by multiple LLM providers including Groq, Gemini, OpenAI, and Claude. SAHITI adapts to different modes of interaction, providing specialized assistance for productivity, wellness, learning, creative tasks, and even acts as your GenZ bestie!
 
 ## 🎬 Project Showcase
 
 | Preview             | Description        |
 |---------------------|--------------------|
-| [![YouTube Demo](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/youtube.jpg)](https://www.youtube.com/watch?v=2FW6IJeOkzI) | 🎬 **YouTube Demo**<br>Click the image to watch the full demo. |
-| [![Blog Post](https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/cover-image.png)](https://dev.to/rohan_sharma/creating-a-chatbot-from-scratch-and-vibe-coding-the-ui-1bij) | 📝 **Blog Post**<br>Read the blog for in-depth explanation. |
+| [![YouTube Demo](https://raw.githubusercontent.com/RS-labhub/Sahiti/master/public/youtube.jpg)](https://www.youtube.com/watch?v=2FW6IJeOkzI) | 🎬 **YouTube Demo**<br>Click the image to watch the full demo. |
+| [![Blog Post](https://raw.githubusercontent.com/RS-labhub/Sahiti/master/public/cover-image.png)](https://dev.to/rohan_sharma/creating-a-chatbot-from-scratch-and-vibe-coding-the-ui-1bij) | 📝 **Blog Post**<br>Read the blog for in-depth explanation. |
 
 
 
@@ -89,7 +89,7 @@ A sophisticated AI-powered assistant built with Next.js and powered by multiple 
 
 ## 💃 Smart Model Selection
 
-RADHIKA automatically selects the best model based on your query complexity:
+SAHITI automatically selects the best model based on your query complexity:
 
 ```typescript
 // Determine which model to use based on conversation context
@@ -117,8 +117,8 @@ if (query.includes("creative", "brainstorm", "idea", "write", "design", "story")
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/RS-labhub/radhika.git
-   cd radhika
+   git clone https://github.com/RS-labhub/sahiti.git
+   cd sahiti
    ```
 
 2. **Install dependencies**
@@ -159,9 +159,9 @@ if (query.includes("creative", "brainstorm", "idea", "write", "design", "story")
 ## 🎮 Usage Guide
 
 ### **Selecting AI Modes**
-Click on any of the six mode buttons to switch RADHIKA's personality and expertise:
+Click on any of the six mode buttons to switch SAHITI's personality and expertise:
 
-- 🧠 **General** - Everyday questions, problem-solving, and general conversations
+- 🦋 **General** - Everyday questions, problem-solving, and general conversations
 - 🎯 **Productivity** - Task management, planning, time optimization, and organization
 - ❤️ **Wellness** - Health guidance, fitness routines, mental well-being, and self-care
 - 📚 **Learning** - Educational support, study plans, skill development, and tutoring
@@ -179,7 +179,7 @@ Choose from multiple AI providers in the bottom-right corner:
 ### **Voice Features**
 - **Voice Input**: Click the microphone button to speak your message
 - **Voice Output**: Toggle the speaker icon to enable/disable AI voice responses
-- **Multi-Language**: Speak in any language - RADHIKA adapts automatically
+- **Multi-Language**: Speak in any language - SAHITI adapts automatically
 - **Voice Controls**: Stop speaking mid-response with the stop button
 
 ### **Quick Actions**
@@ -203,7 +203,7 @@ Each mode provides quick action buttons with pre-defined prompts:
 ## 🏗️ Project Structure
 
 ```
-radhika/
+sahiti/
 ├── app/
 │   ├── api/chat/route.ts          # Multi-provider chat API endpoint
 │   ├── globals.css                # Global styles and theme variables
@@ -217,6 +217,7 @@ radhika/
 │   ├── chat-input.tsx             # Input field with voice controls
 │   ├── chat-container.tsx         # Chat logic and state management
 │   ├── ai-visualization.tsx       # 3D particle system visualization
+│   ├── butterfly-icon.tsx         # Custom butterfly icon component
 │   └── activity-matrix.tsx        # Real-time analytics dashboard
 ├── hooks/
 │   └── use-speech.ts              # Speech recognition and synthesis
@@ -263,7 +264,7 @@ const MODELS = {
 ## 🌟 Key Features Explained
 
 ### **Adaptive Model Selection**
-RADHIKA intelligently chooses the best model for your query:
+SAHITI intelligently chooses the best model for your query:
 - **Fast Model**: Quick responses for casual conversations
 - **Reasoning Model**: Complex analysis, planning, and problem-solving
 - **Creative Model**: Brainstorming, writing, and artistic tasks
@@ -327,8 +328,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support & Community
 
-- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/RS-labhub/radhika/issues)
-- **Discussions**: Join conversations on [GitHub Discussions](https://github.com/RS-labhub/radhika/discussions)
+- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/RS-labhub/sahiti/issues)
+- **Discussions**: Join conversations on [GitHub Discussions](https://github.com/RS-labhub/sahiti/discussions)
 - **Email**: Contact the maintainer at `rs4101976@gmail.com`
 - **X/Twitter**: Follow updates [@rrs00179](https://x.com/rrs00179)
 
@@ -349,14 +350,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Meet the Author
 
-<img  src="https://raw.githubusercontent.com/RS-labhub/Radhika/master/public/Author.jpg" alt="Author">
+<img  src="https://raw.githubusercontent.com/RS-labhub/Sahiti/master/public/Author.jpg" alt="Author">
 
 <div align="center">
 
 **Built with ❤️ by [RS-labhub](https://github.com/RS-labhub)**
 
-*RADHIKA - Your Adaptive AI Companion for Every Need*
+*SAHITI - Your Adaptive AI Companion for Every Need*
 
-[⭐ Star this repo](https://github.com/RS-labhub/radhika) • [🐛 Report Bug • 💡 Request Feature](https://github.com/RS-labhub/radhika/issues)
+[⭐ Star this repo](https://github.com/RS-labhub/sahiti) • [🐛 Report Bug • 💡 Request Feature](https://github.com/RS-labhub/sahiti/issues)
 
 </div>

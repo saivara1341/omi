@@ -2,34 +2,34 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Radhika',
+  title: 'Sahiti',
   description:
-    'Radhika is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
+    'Sahiti is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
   generator: 'Rohan Sharma',
   icons: {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: 'Radhika',
-    siteName: 'radhika-sharma',
-    url: 'https://radhika-sharma.vercel.app/',
+    title: 'Sahiti',
+    siteName: 'sahiti-sharma',
+    url: 'https://sahiti-sharma.vercel.app/',
     description:
-      'Radhika is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
+      'Sahiti is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
     type: 'website',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Radhika AI Chatbot',
+        alt: 'Sahiti AI Chatbot',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Radhika',
+    title: 'Sahiti',
     description:
-      'Radhika is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
+      'Sahiti is a versatile AI chatbot designed to assist with a wide range of tasks, from answering questions to providing recommendations and engaging in casual conversation.',
     images: ['/og-image.jpg'],
   },
 }

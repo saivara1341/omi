@@ -1,321 +1,271 @@
 "use client"
 
 import { useChat } from "@ai-sdk/react"
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Toaster } from "@/components/ui/sonner"
+import { toast } from "sonner"
+import { useSpeech } from "@/hooks/use-speech"
+import { ActivityMatrix } from "@/components/activity-matrix"
+import { AIVisualization } from "@/components/ai-visualization"
+import { ButterflyIcon } from "@/components/butterfly-icon"
+import ReactMarkdown from "react-markdown"
+import type { Components } from "react-markdown"
 import {
   Brain,
+  Target,
   Heart,
   BookOpen,
   Lightbulb,
+  Sparkles,
   User,
-  Target,
-  MessageCircle,
-  Trash2,
   Mic,
   MicOff,
   ArrowUp,
-  Sparkles,
-  Github,
-  Menu,
-  X,
-  Volume2,
   VolumeX,
-  Users,
-  Sun,
-  Moon,
   Cpu,
-  AlertCircle,
   ChevronDown,
   Key,
   Check,
-  Gamepad2,
-  Palette,
+  Sun,
+  Moon,
+  MessageCircle,
+  Volume2,
+  VolumeX as VolumeOff,
+  Trash2,
+  Github,
+  AlertCircle,
+  X,
+  Menu,
 } from "lucide-react"
-import ReactMarkdown from "react-markdown"
-import { AIVisualization } from "@/components/ai-visualization"
-import { ActivityMatrix } from "@/components/activity-matrix"
-import { useSpeech } from "@/hooks/use-speech"
-import "../styles/globals.css"
-import { Analytics } from "@vercel/analytics/react"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 
 type Mode = "general" | "productivity" | "wellness" | "learning" | "creative" | "bff"
 type Provider = "groq" | "gemini" | "openai" | "claude"
-type UIStyle = "modern" | "pixel"
+
+const MarkdownComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-base lg:text-lg font-semibold mb-2 lg:mb-3 text-gray-900 dark:text-gray-100">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-sm lg:text-base font-semibold mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-xs lg:text-sm font-semibold mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100">{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p className="mb-2 lg:mb-3 last:mb-0 text-sm lg:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-inside mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-inside mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="text-sm lg:text-base text-gray-700 dark:text-gray-300">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+  em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
+  code: ({ children, className }) => {
+    const isInline = !className?.includes("language-")
+    return isInline ? (
+      <code className="bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs lg:text-sm font-mono text-cyan-700 dark:text-cyan-400 border border-gray-300 dark:border-gray-700">
+        {children}
+      </code>
+    ) : (
+      <code className="block bg-gray-200 dark:bg-gray-900 p-2 lg:p-3 rounded-lg text-xs lg:text-sm font-mono overflow-x-auto text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700">
+        {children}
+      </code>
+    )
+  },
+  pre: ({ children }) => (
+    <pre className="bg-gray-200 dark:bg-gray-900 p-2 lg:p-3 rounded-lg mb-2 lg:mb-3 overflow-x-auto border border-gray-300 dark:border-gray-700">
+      {children}
+    </pre>
+  ),
+  blockquote: ({ children, ...props }) => (
+    <blockquote
+      {...props}
+      className="border-l-4 border-cyan-500 pl-3 lg:pl-4 italic mb-2 lg:mb-3 text-sm lg:text-base text-gray-600 dark:text-gray-400"
+    >
+      {children}
+    </blockquote>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 underline"
+    >
+      {children}
+    </a>
+  ),
+}
 
 const MODES = {
   general: {
-    icon: Brain,
     label: "General",
-    description: "General assistance and conversation",
-    placeholder: "Ask me anything...",
+    icon: ButterflyIcon,
+    description: "All-purpose AI companion for everyday queries",
     color: "text-cyan-600 dark:text-cyan-400",
     bg: "bg-cyan-100/50 dark:bg-cyan-950/30",
-    bgPixel: "bg-cyan-100 dark:bg-cyan-900/30",
-    border: "border-cyan-300 dark:border-cyan-500/30",
-    borderPixel: "border-cyan-400 dark:border-cyan-500",
+    border: "border-cyan-500/30",
     gradient: "from-cyan-500 to-blue-600",
     glow: "shadow-cyan-500/20",
+    placeholder: "Ask me anything! I'm here to help with all your questions and conversations.",
   },
   productivity: {
-    icon: Target,
     label: "Productivity",
-    description: "Task management and organization",
-    placeholder: "How can I help you be more productive?",
+    icon: Target,
+    description: "Task management and organization expert",
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-100/50 dark:bg-emerald-950/30",
-    bgPixel: "bg-emerald-100 dark:bg-emerald-900/30",
-    border: "border-emerald-300 dark:border-emerald-500/30",
-    borderPixel: "border-emerald-400 dark:border-emerald-500",
+    border: "border-emerald-500/30",
     gradient: "from-emerald-500 to-teal-600",
     glow: "shadow-emerald-500/20",
+    placeholder: "Let's boost your productivity! Ask about task management, planning, or time optimization.",
   },
   wellness: {
-    icon: Heart,
     label: "Wellness",
-    description: "Health and well-being guidance",
-    placeholder: "What wellness topic can I help with?",
+    icon: Heart,
+    description: "Health and well-being support",
     color: "text-rose-600 dark:text-rose-400",
     bg: "bg-rose-100/50 dark:bg-rose-950/30",
-    bgPixel: "bg-rose-100 dark:bg-rose-900/30",
-    border: "border-rose-300 dark:border-rose-500/30",
-    borderPixel: "border-rose-400 dark:border-rose-500",
+    border: "border-rose-500/30",
     gradient: "from-rose-500 to-pink-600",
     glow: "shadow-rose-500/20",
+    placeholder: "Your wellness journey starts here. Ask about health, fitness, or mental well-being.",
   },
   learning: {
-    icon: BookOpen,
     label: "Learning",
-    description: "Education and skill development",
-    placeholder: "What would you like to learn?",
+    icon: BookOpen,
+    description: "Educational guidance and skill development",
     color: "text-purple-600 dark:text-purple-400",
     bg: "bg-purple-100/50 dark:bg-purple-950/30",
-    bgPixel: "bg-purple-100 dark:bg-purple-900/30",
-    border: "border-purple-300 dark:border-purple-500/30",
-    borderPixel: "border-purple-400 dark:border-purple-500",
+    border: "border-purple-500/30",
     gradient: "from-purple-500 to-indigo-600",
     glow: "shadow-purple-500/20",
+    placeholder: "Ready to learn something new? Ask about any topic or skill you'd like to develop.",
   },
   creative: {
-    icon: Lightbulb,
     label: "Creative",
-    description: "Ideas and creative projects",
-    placeholder: "Let's brainstorm something creative...",
+    icon: Lightbulb,
+    description: "Brainstorming and creative inspiration",
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-100/50 dark:bg-amber-950/30",
-    bgPixel: "bg-amber-100 dark:bg-amber-900/30",
-    border: "border-amber-300 dark:border-amber-500/30",
-    borderPixel: "border-amber-400 dark:border-amber-500",
+    border: "border-amber-500/30",
     gradient: "from-amber-500 to-orange-600",
     glow: "shadow-amber-500/20",
+    placeholder: "Let's create something amazing! Share your ideas or ask for creative inspiration.",
   },
   bff: {
-    icon: Users,
     label: "BFF",
-    description: "Your GenZ bestie who speaks your language",
-    placeholder: "Hey bestie, what's up? 💕",
+    icon: Sparkles,
+    description: "Your GenZ bestie for life advice and fun",
     color: "text-pink-600 dark:text-pink-400",
     bg: "bg-pink-100/50 dark:bg-pink-950/30",
-    bgPixel: "bg-pink-100 dark:bg-pink-900/30",
-    border: "border-pink-300 dark:border-pink-500/30",
-    borderPixel: "border-pink-400 dark:border-pink-500",
+    border: "border-pink-500/30",
     gradient: "from-pink-500 to-rose-600",
     glow: "shadow-pink-500/20",
-  },
-}
-
-const PROVIDERS = {
-  groq: {
-    name: "Groq",
-    description: "Fast and efficient LLM",
-    models: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b"],
-    requiresApiKey: false,
-    color: "pink",
-  },
-  gemini: {
-    name: "Gemini",
-    description: "Google's multimodal AI",
-    models: ["gemini-2.0-flash"],
-    requiresApiKey: false,
-    color: "emerald",
-  },
-  openai: {
-    name: "OpenAI",
-    description: "Advanced language models",
-    models: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
-    requiresApiKey: true,
-    color: "violet",
-  },
-  claude: {
-    name: "Claude",
-    description: "Anthropic's helpful assistant",
-    models: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
-    requiresApiKey: true,
-    color: "orange",
+    placeholder: "Hey bestie! What's on your mind? Let's chat about anything and everything! 💕",
   },
 }
 
 const QUICK_ACTIONS = {
   general: [
+    "What's the weather like today?",
     "Help me make a decision",
-    "Explain complex topic",
-    "Give advice on a situation",
-    "Solve a problem step by step",
+    "Explain a complex topic",
+    "Give me some advice",
   ],
-  productivity: ["Plan my day effectively", "Break down a project", "Prioritize my tasks", "Time management tips"],
-  wellness: ["Morning routine ideas", "Stress management techniques", "Healthy habit suggestions", "Workout planning"],
-  learning: ["Explain a concept", "Create a study plan", "Learning resources", "Practice exercises"],
-  creative: ["Brainstorm ideas", "Creative writing prompts", "Project inspiration", "Overcome creative blocks"],
-  bff: ["What's the tea? ☕", "I need some motivation 💪", "Help me with drama 🎭", "Let's chat about life 💫"],
+  productivity: [
+    "Create a daily schedule",
+    "Help me prioritize tasks",
+    "Suggest productivity techniques",
+    "Plan a project timeline",
+  ],
+  wellness: [
+    "Design a workout routine",
+    "Suggest healthy meal ideas",
+    "Help with stress management",
+    "Create a sleep schedule",
+  ],
+  learning: [
+    "Explain a concept simply",
+    "Create a study plan",
+    "Suggest learning resources",
+    "Help with problem-solving",
+  ],
+  creative: [
+    "Brainstorm creative ideas",
+    "Help with writer's block",
+    "Suggest art projects",
+    "Create a story outline",
+  ],
+  bff: [
+    "I need some motivation",
+    "Help me with relationship advice",
+    "What should I watch/read?",
+    "Let's have a fun conversation",
+  ],
 }
 
-import type { Components } from "react-markdown"
+const PROVIDERS = {
+  groq: {
+    name: "Groq",
+    requiresApiKey: false,
+    description: "Fast inference with Llama models",
+  },
+  gemini: {
+    name: "Gemini",
+    requiresApiKey: false,
+    description: "Google's advanced AI",
+  },
+  openai: {
+    name: "OpenAI",
+    requiresApiKey: true,
+    description: "GPT-4 and other OpenAI models",
+  },
+  claude: {
+    name: "Claude",
+    requiresApiKey: true,
+    description: "Anthropic's helpful assistant",
+  },
+}
 
-export default function FuturisticRadhika() {
+export default function Home() {
   const [mode, setMode] = useState<Mode>("general")
   const [provider, setProvider] = useState<Provider>("groq")
   const [darkMode, setDarkMode] = useState(false)
-  const [uiStyle, setUIStyle] = useState<UIStyle>("modern")
   const [error, setError] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false)
-  const [selectedProvider, setSelectedProvider] = useState<Provider>("groq")
-  const [tempApiKey, setTempApiKey] = useState("")
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
   const [isProviderMenuOpen, setIsProviderMenuOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [messagesByMode, setMessagesByMode] = useState<Record<Mode, any[]>>({
+    general: [],
+    productivity: [],
+    wellness: [],
+    learning: [],
+    creative: [],
+    bff: [],
+  })
 
-  // Dynamic Markdown Components based on UI style
-  const MarkdownComponents: Components = useMemo(
-    () => ({
-      h1: ({ children }) => (
-        <h1
-          className={`text-base lg:text-lg mb-2 lg:mb-3 text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "text-xs lg:text-sm font-bold pixel-font" : "font-semibold"}`}
-        >
-          {children}
-        </h1>
-      ),
-      h2: ({ children }) => (
-        <h2
-          className={`text-sm lg:text-base mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "text-xs lg:text-xs font-bold pixel-font" : "font-semibold"}`}
-        >
-          {children}
-        </h2>
-      ),
-      h3: ({ children }) => (
-        <h3
-          className={`text-xs lg:text-sm mb-1.5 lg:mb-2 text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "text-xs lg:text-xs font-bold pixel-font" : "font-semibold"}`}
-        >
-          {children}
-        </h3>
-      ),
-      p: ({ children }) => (
-        <p
-          className={`mb-2 lg:mb-3 last:mb-0 text-sm lg:text-base text-gray-700 dark:text-gray-300 leading-relaxed ${uiStyle === "pixel" ? "text-xs lg:text-xs pixel-font" : ""}`}
-        >
-          {children}
-        </p>
-      ),
-      ul: ({ children }) => (
-        <ul
-          className={`mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300 ${uiStyle === "pixel" ? "list-none text-xs lg:text-xs pixel-font" : "list-disc list-inside"}`}
-        >
-          {children}
-        </ul>
-      ),
-      ol: ({ children }) => (
-        <ol
-          className={`mb-2 lg:mb-3 space-y-1 text-sm lg:text-base text-gray-700 dark:text-gray-300 ${uiStyle === "pixel" ? "list-none text-xs lg:text-xs pixel-font" : "list-decimal list-inside"}`}
-        >
-          {children}
-        </ol>
-      ),
-      li: ({ children }) => (
-        <li
-          className={`text-sm lg:text-base text-gray-700 dark:text-gray-300 ${uiStyle === "pixel" ? 'text-xs lg:text-xs pixel-font before:content-["▶_"] before:text-cyan-600 dark:before:text-cyan-400' : ""}`}
-        >
-          {children}
-        </li>
-      ),
-      strong: ({ children }) => (
-        <strong
-          className={`text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "font-bold pixel-font" : "font-semibold"}`}
-        >
-          {children}
-        </strong>
-      ),
-      em: ({ children }) => (
-        <em className={`italic text-gray-700 dark:text-gray-300 ${uiStyle === "pixel" ? "pixel-font" : ""}`}>
-          {children}
-        </em>
-      ),
-      code: ({ children, className }) => {
-        const isInline = !className?.includes("language-")
-        return isInline ? (
-          <code
-            className={`px-1.5 py-0.5 text-xs lg:text-sm font-mono text-cyan-700 dark:text-cyan-400 ${uiStyle === "pixel"
-              ? "bg-gray-300 dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font px-2 py-1 text-gray-900 dark:text-gray-100"
-              : "bg-gray-200 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-700"
-              }`}
-          >
-            {children}
-          </code>
-        ) : (
-          <code
-            className={`block p-2 lg:p-3 text-xs lg:text-sm font-mono overflow-x-auto ${uiStyle === "pixel"
-              ? "bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-              : "bg-gray-200 dark:bg-gray-900 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700"
-              }`}
-          >
-            {children}
-          </code>
-        )
-      },
-      pre: ({ children }) => (
-        <pre
-          className={`p-2 lg:p-3 mb-2 lg:mb-3 overflow-x-auto ${uiStyle === "pixel"
-            ? "bg-gray-200 dark:bg-gray-900 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-            : "bg-gray-200 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700"
-            }`}
-        >
-          {children}
-        </pre>
-      ),
-      blockquote: ({ children, ...props }) => (
-        <blockquote
-          {...props}
-          className={`border-l-4 border-cyan-500 pl-3 lg:pl-4 italic mb-2 lg:mb-3 text-sm lg:text-base text-gray-600 dark:text-gray-400 ${uiStyle === "pixel" ? "pixel-font border-cyan-600 dark:border-cyan-400" : ""}`}
-        >
-          {children}
-        </blockquote>
-      ),
-      a: ({ href, children }) => (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 underline ${uiStyle === "pixel" ? "pixel-font" : ""}`}
-        >
-          {children}
-        </a>
-      ),
-    }),
-    [uiStyle],
-  )
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const currentMode = MODES[mode]
+  const CurrentModeIcon = currentMode.icon
 
-  // Use the speech hook
+  // Speech functionality
   const {
     isListening,
     isSpeaking,
@@ -328,37 +278,72 @@ export default function FuturisticRadhika() {
     clearError: clearSpeechError,
   } = useSpeech()
 
-  // Stable API keys state
-  const [apiKeys, setApiKeys] = useState(() => ({
-    openai: "",
-    claude: "",
-  }))
+  // Load saved data on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Load dark mode preference
+      const savedDarkMode = localStorage.getItem("darkMode")
+      if (savedDarkMode) {
+        setDarkMode(JSON.parse(savedDarkMode))
+      }
 
-  // Separate message states for each mode - use ref to avoid dependency issues
-  const messagesByModeRef = useRef<Record<Mode, any[]>>({
-    general: [],
-    productivity: [],
-    wellness: [],
-    learning: [],
-    creative: [],
-    bff: [],
-  })
+      // Load voice preference
+      const savedVoiceEnabled = localStorage.getItem("voiceEnabled")
+      if (savedVoiceEnabled) {
+        setVoiceEnabled(JSON.parse(savedVoiceEnabled))
+      }
 
-  // Current mode ref to avoid stale closures
-  const currentModeRef = useRef<Mode>(mode)
-  currentModeRef.current = mode
+      // Load API keys
+      const savedApiKeys = localStorage.getItem("apiKeys")
+      if (savedApiKeys) {
+        setApiKeys(JSON.parse(savedApiKeys))
+      }
 
-  // Memoize the current API key to prevent unnecessary re-renders
-  const currentApiKey = useMemo(() => {
-    if (!PROVIDERS[provider].requiresApiKey) return ""
-    return provider === "openai" ? apiKeys.openai : provider === "claude" ? apiKeys.claude : ""
-  }, [provider, apiKeys])
+      // Load messages for all modes
+      const savedMessages: Record<Mode, any[]> = {
+        general: [],
+        productivity: [],
+        wellness: [],
+        learning: [],
+        creative: [],
+        bff: [],
+      }
 
-  // Stable chat configuration - memoized to prevent infinite loops
+      Object.keys(savedMessages).forEach((modeKey) => {
+        const saved = localStorage.getItem(`messages_${modeKey}`)
+        if (saved) {
+          savedMessages[modeKey as Mode] = JSON.parse(saved)
+        }
+      })
+
+      setMessagesByMode(savedMessages)
+    }
+  }, [setVoiceEnabled])
+
+  // Apply dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+    localStorage.setItem("darkMode", JSON.stringify(darkMode))
+  }, [darkMode])
+
+  // Save voice preference
+  useEffect(() => {
+    localStorage.setItem("voiceEnabled", JSON.stringify(voiceEnabled))
+  }, [voiceEnabled])
+
+  // Save API keys
+  useEffect(() => {
+    localStorage.setItem("apiKeys", JSON.stringify(apiKeys))
+  }, [apiKeys])
+
+  // Chat configuration
   const chatConfig = useMemo(
     () => ({
       api: "/api/chat",
-      experimental_throttle: 50, // Throttle UI updates to prevent infinite loops
       body: {
         mode,
         provider,
@@ -373,990 +358,603 @@ export default function FuturisticRadhika() {
         const errorMessage = error.message || "Failed to send message. Please try again."
         setError(errorMessage)
 
-        // If it's an API key error, suggest setting up the API key
         if (errorMessage.includes("API configuration error") || errorMessage.includes("API key")) {
           setError(`${errorMessage} Please set up your ${PROVIDERS[provider].name} API key.`)
         }
       },
-      onFinish: (message: any) => {
-        setError(null)
-        if (voiceEnabled && message.content) {
-          speakMessage(message.content)
-        }
-      },
     }),
-    [mode, provider, apiKeys.openai, apiKeys.claude, voiceEnabled, speakMessage],
+    [mode, provider, apiKeys.openai, apiKeys.claude],
   )
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, setInput } = useChat(chatConfig)
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat(chatConfig)
 
-  // Update messages by mode when messages change - use useCallback to prevent infinite loops
-  const updateMessagesByMode = useCallback(() => {
+  // Sync messages with mode-specific storage
+  useEffect(() => {
+    const currentMessages = messagesByMode[mode]
+    if (currentMessages.length !== messages.length) {
+      setMessages(currentMessages)
+    }
+  }, [mode, messagesByMode, messages.length, setMessages])
+
+  // Save messages when they change
+  useEffect(() => {
     if (messages.length > 0) {
-      messagesByModeRef.current[currentModeRef.current] = [...messages]
-    }
-  }, [messages])
-
-  useEffect(() => {
-    updateMessagesByMode()
-  }, [updateMessagesByMode])
-
-  // Apply theme
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [darkMode])
-
-  // Load API keys from localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedApiKeys = localStorage.getItem("radhika-api-keys")
-      if (savedApiKeys) {
-        try {
-          const parsedKeys = JSON.parse(savedApiKeys)
-          setApiKeys(parsedKeys)
-        } catch (e) {
-          console.error("Failed to parse saved API keys:", e)
-        }
+      const updatedMessagesByMode = {
+        ...messagesByMode,
+        [mode]: messages,
       }
+      setMessagesByMode(updatedMessagesByMode)
+      localStorage.setItem(`messages_${mode}`, JSON.stringify(messages))
     }
-  }, [])
+  }, [messages, mode, messagesByMode])
 
-  // Combine errors
-  const combinedError = error || speechError
-
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleQuickAction = useCallback(
-    (action: string) => {
-      setInput(action)
-      setError(null)
-      clearSpeechError()
-    },
-    [setInput, clearSpeechError],
-  )
-
-  const clearChat = useCallback(() => {
-    setMessages([])
-    messagesByModeRef.current[currentModeRef.current] = []
-    setError(null)
-    clearSpeechError()
-    stopSpeaking()
-  }, [setMessages, clearSpeechError, stopSpeaking])
-
-  const handleVoiceInput = useCallback(() => {
-    startListening((transcript: string) => {
-      setInput(transcript)
-    })
-  }, [startListening, setInput])
-
-  // Handle mode change - load messages for the new mode
-  const handleModeChange = useCallback(
-    (newMode: Mode) => {
-      if (newMode === mode) return // Don't update if mode hasn't changed
-
-      // Save current messages to current mode
-      messagesByModeRef.current[currentModeRef.current] = [...messages]
-
-      // Switch to new mode
-      setMode(newMode)
-      setError(null)
-      clearSpeechError()
-      setIsMobileMenuOpen(false)
-
-      // Set messages for new mode
-      const newModeMessages = messagesByModeRef.current[newMode] || []
-      setMessages(newModeMessages)
-    },
-    [messages, setMessages, mode, clearSpeechError],
-  )
-
-  // Handle provider change
-  const handleProviderChange = useCallback(
-    (newProvider: Provider) => {
-      // Close the provider menu
-      setIsProviderMenuOpen(false)
-
-      // Check if API key is required and available
-      if (PROVIDERS[newProvider].requiresApiKey) {
-        const hasApiKey = newProvider === "openai" ? apiKeys.openai : newProvider === "claude" ? apiKeys.claude : false
-        if (!hasApiKey) {
-          setSelectedProvider(newProvider)
-          setTempApiKey("")
-          setIsApiKeyDialogOpen(true)
-          return
-        }
+  // Handle voice synthesis
+  const lastMessageRef = useRef<string>("")
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (
+        lastMessage.role === "assistant" &&
+        lastMessage.content !== lastMessageRef.current &&
+        voiceEnabled &&
+        !isLoading
+      ) {
+        lastMessageRef.current = lastMessage.content
+        setTimeout(() => {
+          speakMessage(lastMessage.content)
+        }, 100)
       }
+    }
+  }, [messages, voiceEnabled, isLoading, speakMessage])
 
-      setProvider(newProvider)
-      setError(null)
-      clearSpeechError()
-    },
-    [apiKeys, clearSpeechError],
-  )
-
-  // Handle API key save
-  const handleSaveApiKey = useCallback(() => {
-    if (!tempApiKey.trim()) {
-      setIsApiKeyDialogOpen(false)
+  // Handle voice input
+  const handleVoiceInput = useCallback(() => {
+    if (isSpeaking) {
+      stopSpeaking()
       return
     }
 
-    // Update API keys
-    const updatedApiKeys = {
-      ...apiKeys,
-      [selectedProvider]: tempApiKey.trim(),
-    }
-    setApiKeys(updatedApiKeys)
+    startListening((transcript: string) => {
+      setInput(transcript)
+    })
+  }, [isSpeaking, stopSpeaking, startListening, setInput])
 
-    // Save API keys to localStorage
-    localStorage.setItem("radhika-api-keys", JSON.stringify(updatedApiKeys))
+  // Handle quick actions
+  const handleQuickAction = useCallback(
+    (action: string) => {
+      setInput(action)
+    },
+    [setInput],
+  )
 
-    // Switch to the selected provider
-    setProvider(selectedProvider)
-    setError(null)
-    clearSpeechError()
-    setIsApiKeyDialogOpen(false)
-    setTempApiKey("")
-  }, [apiKeys, selectedProvider, tempApiKey, clearSpeechError])
-
-  const currentMode = useMemo(() => MODES[mode], [mode])
-  const CurrentModeIcon = currentMode.icon
-
-  const formatTime = useCallback((timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  // Handle mode change
+  const handleModeChange = useCallback((newMode: Mode) => {
+    setMode(newMode)
+    setIsMobileMenuOpen(false)
   }, [])
 
-  // Close provider menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (isProviderMenuOpen && !target.closest('[data-provider-menu="true"]')) {
-        setIsProviderMenuOpen(false)
-      }
-    }
+  // Handle provider change
+  const handleProviderChange = useCallback((newProvider: Provider) => {
+    setProvider(newProvider as Provider)
+    setIsProviderMenuOpen(false)
+  }, [])
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+  // Clear chat
+  const handleClearChat = useCallback(() => {
+    if (window.confirm("Are you sure you want to clear this chat? This action cannot be undone.")) {
+      setMessages([])
+      const updatedMessagesByMode = {
+        ...messagesByMode,
+        [mode]: [],
+      }
+      setMessagesByMode(updatedMessagesByMode)
+      localStorage.removeItem(`messages_${mode}`)
     }
-  }, [isProviderMenuOpen])
+  }, [setMessages, messagesByMode, mode])
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null)
+    clearSpeechError()
+  }, [clearSpeechError])
+
+  // Format time
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
+  // Handle API key setup
+  const handleApiKeySetup = (provider: string, apiKey: string) => {
+    setApiKeys((prev) => ({ ...prev, [provider]: apiKey }))
+    toast.success(`${PROVIDERS[provider as Provider].name} API key saved successfully!`)
+  }
 
   return (
-    <>
-    <div
-      className={`h-screen overflow-hidden transition-colors duration-200 ${uiStyle === "pixel"
-        ? "bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pixel-font"
-        : "bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100"
-        }`}
-    >
-      <div className="flex h-full">
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-
-        {/* Left Sidebar */}
-        <div
-          className={`
-fixed lg:relative inset-y-0 left-0 z-50 w-80 flex flex-col transform transition-all duration-300 ease-out overflow-y-auto ${uiStyle === "pixel"
-              ? "bg-gray-200 dark:bg-gray-800 border-r-4 border-gray-400 dark:border-gray-600 pixel-border"
-              : "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200 dark:border-cyan-500/20 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent"
-            }
-${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-`}
-        >
-          {/* Header */}
-          <div
-            className={`p-6 ${uiStyle === "pixel"
-              ? "border-b-4 border-gray-400 dark:border-gray-600"
-              : "border-b border-gray-200 dark:border-cyan-500/20"
-              }`}
-          >
-            <div className="flex items-center space-x-4">
-              <div
-                className={`w-12 h-12 bg-gradient-to-br ${currentMode.gradient} flex items-center justify-center shadow-lg ${currentMode.glow} shadow-2xl transform transition-all duration-300 hover:scale-105 ${uiStyle === "pixel" ? `border-4 ${currentMode.borderPixel} pixel-border` : "rounded-2xl"
-                  }`}
-              >
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1
-                  className={`text-lg font-bold ${uiStyle === "pixel"
-                    ? "text-gray-900 dark:text-gray-100 pixel-font"
-                    : "bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent"
-                    }`}
-                >
-                  RADHIKA
-                </h1>
-                <p className={`text-xs text-gray-600 dark:text-gray-400 ${uiStyle === "pixel" ? "pixel-font" : ""}`}>
-                  {uiStyle === "pixel" ? "AI Assistant v2.0" : "Futuristic AI Assistant"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className={`lg:hidden absolute top-4 right-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 ${uiStyle === "pixel" ? "border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font" : ""
-              }`}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-
-          <Separator
-            className={`${uiStyle === "pixel" ? "bg-gray-400 dark:bg-gray-600 h-1" : "bg-gray-200 dark:bg-cyan-500/20"
-              }`}
-          />
-
-          {/* Mode Selector */}
-          <div className="p-4">
-            <h3
-              className={`text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3 ${uiStyle === "pixel" ? "font-bold pixel-font" : ""
-                }`}
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Sidebar */}
+      <div
+        className={`
+        fixed lg:relative inset-y-0 left-0 z-50 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200 dark:border-cyan-500/20 flex flex-col transform transition-all duration-300 ease-out overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent
+        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-cyan-500/20">
+          <div className="flex items-center space-x-4">
+            <div
+              className={`w-12 h-12 bg-gradient-to-br ${currentMode.gradient} rounded-2xl flex items-center justify-center shadow-lg ${currentMode.glow} shadow-2xl transform transition-all duration-300 hover:scale-105 animate-pulse`}
             >
-              {uiStyle === "pixel" ? "MODES" : "Modes"}
-            </h3>
-            <div className={uiStyle === "pixel" ? "space-y-2" : "space-y-1"}>
-              {Object.entries(MODES).map(([key, modeData]) => {
-                const ModeIcon = modeData.icon
-                const isActive = mode === key
-                const modeMessages = messagesByModeRef.current[key as Mode]?.length || 0
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleModeChange(key as Mode)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-all duration-200 ${uiStyle === "pixel"
-                      ? `border-2 pixel-border pixel-font font-bold ${isActive
-                        ? `${modeData.bgPixel} ${modeData.color} ${modeData.borderPixel} shadow-lg ${modeData.glow}`
-                        : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 border-gray-400 dark:border-gray-600"
-                      }`
-                      : `rounded-lg ${isActive
-                        ? `${modeData.bg} ${modeData.color} ${modeData.border} border shadow-lg ${modeData.glow}`
-                        : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                      }`
-                      }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <ModeIcon className="w-4 h-4" />
-                      <span>{uiStyle === "pixel" ? modeData.label.toUpperCase() : modeData.label}</span>
-                    </div>
-                    {modeMessages > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${uiStyle === "pixel"
-                          ? "bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                          }`}
-                      >
-                        {modeMessages}
-                      </Badge>
-                    )}
-                  </button>
-                )
-              })}
+              <Sparkles className="w-6 h-6 text-white animate-spin" style={{ animationDuration: '3s' }} />
             </div>
-          </div>
-
-          <Separator
-            className={`${uiStyle === "pixel" ? "bg-gray-400 dark:bg-gray-600 h-1" : "bg-gray-200 dark:bg-cyan-500/20"
-              }`}
-          />
-
-          {/* Quick Actions */}
-          <div className="p-4 flex-1">
-            <h3
-              className={`text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3 ${uiStyle === "pixel" ? "font-bold pixel-font" : ""
-                }`}
-            >
-              {uiStyle === "pixel" ? "QUICK ACTIONS" : "Quick Actions"}
-            </h3>
-            <div className={uiStyle === "pixel" ? "space-y-2" : "space-y-2"}>
-              {QUICK_ACTIONS[mode].map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    handleQuickAction(action)
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors ${uiStyle === "pixel"
-                    ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-lg"
-                    }`}
-                >
-                  {uiStyle === "pixel" ? `▶ ${action}` : action}
-                </button>
-              ))}
+            <div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent animate-pulse">
+                SAHITI
+              </h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Futuristic AI Assistant</p>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Chat Header */}
-          <div
-            className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-4 ${uiStyle === "pixel"
-              ? "bg-gray-200 dark:bg-gray-800 border-b-4 border-gray-400 dark:border-gray-600"
-              : "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-cyan-500/20"
-              }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className={`lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 flex-shrink-0 p-1 ${uiStyle === "pixel"
-                    ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                    }`}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="lg:hidden absolute top-4 right-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+
+        <Separator className="bg-gray-200 dark:bg-cyan-500/20" />
+
+        {/* Mode Selector */}
+        <div className="p-4">
+          <h3 className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Modes</h3>
+          <div className="space-y-1">
+            {Object.entries(MODES).map(([key, modeData]) => {
+              const ModeIcon = modeData.icon
+              const isActive = mode === key
+              const modeMessages = messagesByMode[key as Mode]?.length || 0
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleModeChange(key as Mode)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? `${modeData.bg} ${modeData.color} ${modeData.border} border shadow-lg ${modeData.glow}`
+                      : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50"
+                  }`}
                 >
-                  <Menu className="w-4 h-4" />
-                </Button>
-                <div
-                  className={`p-1.5 sm:p-2 flex-shrink-0 shadow-lg ${currentMode.glow} ${uiStyle === "pixel"
-                    ? `${currentMode.bgPixel} ${currentMode.borderPixel} border-4 pixel-border`
-                    : `rounded-lg ${currentMode.bg} ${currentMode.border} border`
-                    }`}
+                  <div className="flex items-center space-x-3">
+                    <ModeIcon className="w-4 h-4" />
+                    <span>{modeData.label}</span>
+                  </div>
+                  {modeMessages > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    >
+                      {modeMessages}
+                    </Badge>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <Separator className="bg-gray-200 dark:bg-cyan-500/20" />
+
+        {/* Quick Actions */}
+        <div className="p-4 flex-1">
+          <h3 className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+            Quick Actions
+          </h3>
+          <div className="space-y-2">
+            {QUICK_ACTIONS[mode].map((action, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  handleQuickAction(action)
+                  setIsMobileMenuOpen(false)
+                }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-lg transition-colors"
+              >
+                {action}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Separator className="bg-gray-200 dark:bg-cyan-500/20" />
+
+        {/* Activity Matrix */}
+        <div className="p-4">
+          <ActivityMatrix messages={messages} currentMode={mode} />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-cyan-500/20 px-3 sm:px-6 py-2 sm:py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50 flex-shrink-0 p-1"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+              <div
+                className={`p-1.5 sm:p-2 rounded-lg ${currentMode.bg} ${currentMode.border} border flex-shrink-0 shadow-lg ${currentMode.glow}`}
+              >
+                <CurrentModeIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${currentMode.color}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {currentMode.label} Assistant
+                </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate hidden sm:block">
+                  {currentMode.description}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDarkMode(!darkMode)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50 p-1"
+                title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              </Button>
+
+              <Badge
+                variant="secondary"
+                className="bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-cyan-500/30 hidden sm:inline-flex"
+              >
+                <MessageCircle className="w-3 h-3 mr-2" />
+                {messages.length}
+              </Badge>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                className={`p-1 transition-colors ${voiceEnabled ? "text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}
+                title={voiceEnabled ? "Disable voice responses" : "Enable voice responses"}
+              >
+                {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeOff className="w-3.5 h-3.5" />}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearChat}
+                disabled={messages.length === 0}
+                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Clear chat history"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-800 dark:text-gray-300 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors p-2"
+                asChild
+                title="View on GitHub"
+              >
+                <a
+                  href="https://github.com/RS-labhub/sahiti"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="View on GitHub"
                 >
-                  <CurrentModeIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${currentMode.color}`} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2
-                    className={`text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate ${uiStyle === "pixel" ? "font-bold pixel-font" : ""
-                      }`}
-                  >
-                    {uiStyle === "pixel"
-                      ? `${currentMode.label.toUpperCase()} ASSISTANT`
-                      : `${currentMode.label} Assistant`}
-                  </h2>
-                  <p
-                    className={`text-xs text-gray-600 dark:text-gray-400 truncate hidden sm:block ${uiStyle === "pixel" ? "pixel-font" : ""
-                      }`}
-                  >
-                    {currentMode.description}
+                  <Github className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {(error || speechError) && (
+          <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800/50 px-3 sm:px-6 py-2">
+            <div className="flex items-center space-x-2 text-red-800 dark:text-red-400">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm flex-1">{error || speechError}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearError}
+                className="ml-auto text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 flex-shrink-0"
+                title="Dismiss error"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent">
+          <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 sm:py-6">
+            {messages.length === 0 && (
+              <>
+                <div className="text-center py-6 sm:py-10">
+                  <div className="mb-8">
+                    <AIVisualization mode={mode} isActive={isLoading || isListening} />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    {mode === "bff"
+                      ? "Hey bestie! What's on your mind? 💕"
+                      : `What can I help you ${mode === "general" ? "with" : `${mode === "creative" ? "create" : mode}`}?`}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-400 max-w-md mx-auto px-2 sm:px-4">
+                    {mode === "bff"
+                      ? "I'm your GenZ bestie who speaks your language! Chat with me in any language and I'll vibe with you! ✨"
+                      : `I'm your ${currentMode.label.toLowerCase()} assistant. Ask me anything or use the quick actions to get started.`}
                   </p>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-                {/* UI Style Toggle Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUIStyle(uiStyle === "modern" ? "pixel" : "modern")}
-                  className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-1 transition-colors ${uiStyle === "pixel"
-                    ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                    }`}
-                  title={`Switch to ${uiStyle === "modern" ? "Pixel" : "Modern"} UI`}
-                >
-                  {uiStyle === "modern" ? <Gamepad2 className="w-3.5 h-3.5" /> : <Palette className="w-3.5 h-3.5" />}
-                </Button>
-
-                {/* Theme Toggle Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-1 ${uiStyle === "pixel"
-                    ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                    }`}
-                >
-                  {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-                </Button>
-
-                <Badge
-                  variant="secondary"
-                  className={`hidden sm:inline-flex ${uiStyle === "pixel"
-                    ? "bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font"
-                    : "bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-cyan-500/30"
-                    }`}
-                >
-                  <MessageCircle className="w-3 h-3 mr-2" />
-                  {messages.length}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setVoiceEnabled(!voiceEnabled)}
-                  className={`p-1 transition-colors ${voiceEnabled
-                    ? "text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                    } ${uiStyle === "pixel"
-                      ? `border-2 pixel-border ${voiceEnabled ? "border-cyan-400 dark:border-cyan-500" : "border-gray-400 dark:border-gray-600"}`
-                      : ""
-                    }`}
-                >
-                  {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearChat}
-                  disabled={messages.length === 0}
-                  className={`text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-1 disabled:opacity-50 ${uiStyle === "pixel"
-                    ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                    }`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`text-gray-800 dark:text-gray-300 transition-colors p-2 ${uiStyle === "pixel"
-                    ? "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 border-2 border-gray-400 dark:border-gray-600 pixel-border"
-                    : "bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
-                    }`}
-                  asChild
-                >
-                  <a
-                    href="https://github.com/RS-labhub/radhika"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="View on GitHub"
-                  >
-                    <Github className="w-4 h-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Display */}
-          {combinedError && (
-            <div
-              className={`px-3 sm:px-6 py-2 ${uiStyle === "pixel"
-                ? "bg-red-200 dark:bg-red-900/30 border-b-4 border-red-400 dark:border-red-600"
-                : "bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800/50"
-                }`}
-            >
-              <div className="flex items-center space-x-2 text-red-800 dark:text-red-400">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <p className={`text-sm ${uiStyle === "pixel" ? "pixel-font" : ""}`}>
-                  {uiStyle === "pixel" ? "ERROR: " : ""}
-                  {combinedError}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setError(null)
-                    clearSpeechError()
-                  }}
-                  className={`ml-auto text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 ${uiStyle === "pixel" ? "border-2 border-red-400 dark:border-red-600 pixel-border" : ""
-                    }`}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Messages */}
-          <div
-            className={`flex-1 overflow-y-auto ${uiStyle === "pixel"
-              ? "bg-gray-50 dark:bg-gray-950"
-              : "bg-gray-50 dark:bg-gray-950 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent"
-              }`}
-          >
-            <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 sm:py-6">
-              {messages.length === 0 && (
-                <>
-                  <div className="text-center py-6 sm:py-10">
-                    <div className="mb-8">
-                      <AIVisualization mode={mode} isActive={isLoading || isListening} />
-                    </div>
-                    <h3
-                      className={`text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 ${uiStyle === "pixel" ? "font-bold pixel-font" : ""
-                        }`}
+                <div className="flex flex-wrap justify-center gap-2 px-2">
+                  {QUICK_ACTIONS[mode].map((action, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickAction(action)}
+                      className="px-3 py-2 text-sm text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-300 dark:border-cyan-500/20 hover:border-gray-400 dark:hover:border-cyan-500/40"
                     >
-                      {mode === "bff"
-                        ? uiStyle === "pixel"
-                          ? "HEY BESTIE! WHAT'S ON YOUR MIND? 💕"
-                          : "Hey bestie! What's on your mind? 💕"
-                        : uiStyle === "pixel"
-                          ? `WHAT CAN I HELP YOU ${mode === "general" ? "WITH" : `${mode === "creative" ? "CREATE" : mode.toUpperCase()}`}?`
-                          : `What can I help you ${mode === "general" ? "with" : `${mode === "creative" ? "create" : mode}`}?`}
-                    </h3>
-                    <p
-                      className={`text-sm sm:text-base text-gray-700 dark:text-gray-400 max-w-md mx-auto px-2 sm:px-4 ${uiStyle === "pixel" ? "pixel-font" : ""
-                        }`}
-                    >
-                      {mode === "bff"
-                        ? "I'm your GenZ bestie who speaks your language! Chat with me in any language and I'll vibe with you! ✨"
-                        : `I'm your ${currentMode.label.toLowerCase()} assistant. Ask me anything or use the quick actions to get started.`}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2 px-2">
-                    {QUICK_ACTIONS[mode].map((action, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleQuickAction(action)}
-                        className={`px-3 py-2 text-sm text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors ${uiStyle === "pixel"
-                          ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border pixel-font"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-lg border border-gray-300 dark:border-cyan-500/20 hover:border-gray-400 dark:hover:border-cyan-500/40"
-                          }`}
-                      >
-                        {uiStyle === "pixel" ? `▶ ${action}` : action}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
-              <div className="space-y-3 sm:space-y-5">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex space-x-2 sm:space-x-3 ${message.role === "user" ? "justify-end" : ""}`}
-                  >
-                    {message.role === "assistant" && (
-                      <div
-                        className={`flex-shrink-0 w-8 h-8 flex items-center justify-center shadow-lg ${currentMode.glow} ${uiStyle === "pixel"
-                          ? `${currentMode.bgPixel} ${currentMode.borderPixel} border-4 pixel-border`
-                          : `rounded-lg ${currentMode.bg} ${currentMode.border} border`
-                          }`}
-                      >
-                        <CurrentModeIcon className={`w-5 h-5 ${currentMode.color}`} />
-                      </div>
-                    )}
+            <div className="space-y-3 sm:space-y-5">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex space-x-2 sm:space-x-3 ${message.role === "user" ? "justify-end" : ""}`}
+                >
+                  {message.role === "assistant" && (
                     <div
-                      className={`flex-1 max-w-[80%] sm:max-w-[85%] ${message.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}`}
+                      className={`flex-shrink-0 w-8 h-8 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center shadow-lg ${currentMode.glow}`}
                     >
-                      <div
-                        className={`px-3 py-2 ${message.role === "user"
-                          ? `bg-gradient-to-r ${currentMode.gradient} text-white max-w-full shadow-lg ${currentMode.glow} ${uiStyle === "pixel" ? `${currentMode.borderPixel} border-4 pixel-border` : "rounded-2xl"
-                          }`
-                          : `text-gray-900 dark:text-gray-100 ${uiStyle === "pixel"
-                            ? "bg-white dark:bg-gray-800 border-4 border-gray-400 dark:border-gray-600 pixel-border"
-                            : "bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-2xl"
-                          }`
-                          }`}
-                      >
-                        {message.role === "user" ? (
-                          <div className={`text-sm break-words ${uiStyle === "pixel" ? "pixel-font font-bold" : ""}`}>
-                            {message.content}
-                          </div>
-                        ) : (
-                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                            <ReactMarkdown components={MarkdownComponents}>{message.content}</ReactMarkdown>
-                          </div>
-                        )}
-                      </div>
-                      <div
-                        className={`text-[10px] sm:text-xs text-gray-600 dark:text-gray-500 mt-0.5 sm:mt-1 ${message.role === "user" ? "text-right" : "text-left"
-                          } ${uiStyle === "pixel" ? "pixel-font" : ""}`}
-                      >
-                        {uiStyle === "pixel" ? "[" : ""}
-                        {formatTime(message.createdAt ? new Date(message.createdAt).getTime() : Date.now())}
-                        {uiStyle === "pixel" ? "]" : ""}
-                      </div>
+                      <CurrentModeIcon className={`w-5 h-5 ${currentMode.color}`} />
                     </div>
-                    {message.role === "user" && (
-                      <div
-                        className={`flex-shrink-0 w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ${uiStyle === "pixel" ? "border-4 border-cyan-400 pixel-border" : "rounded-lg"
-                          }`}
-                      >
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {isLoading && (
-                <div className="flex space-x-2 sm:space-x-3">
+                  )}
                   <div
-                    className={`flex-shrink-0 w-8 h-8 flex items-center justify-center shadow-lg ${currentMode.glow} ${uiStyle === "pixel"
-                      ? `${currentMode.bgPixel} ${currentMode.borderPixel} border-4 pixel-border`
-                      : `rounded-lg ${currentMode.bg} ${currentMode.border} border`
+                    className={`flex-1 max-w-[80%] sm:max-w-[85%] ${message.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}`}
+                  >
+                    <div
+                      className={`px-3 py-2 rounded-2xl ${
+                        message.role === "user"
+                          ? `bg-gradient-to-r ${currentMode.gradient} text-white max-w-full shadow-lg ${currentMode.glow}`
+                          : "bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 text-gray-900 dark:text-gray-100"
                       }`}
-                  >
-                    <CurrentModeIcon className={`w-5 h-5 ${currentMode.color} animate-pulse`} />
-                  </div>
-                  <div className="flex-1">
-                    <div
-                      className={`px-3 py-2 ${uiStyle === "pixel"
-                        ? "bg-white dark:bg-gray-800 border-4 border-gray-400 dark:border-gray-600 pixel-border"
-                        : "bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-2xl"
-                        }`}
                     >
-                      <div className="flex items-center space-x-2">
-                        <div className="flex space-x-1">
-                          <div
-                            className={`bg-cyan-600 dark:bg-cyan-400 animate-bounce ${uiStyle === "pixel" ? "w-2 h-2 pixel-border" : "w-1.5 h-1.5 rounded-full"
-                              }`}
-                          />
-                          <div
-                            className={`bg-cyan-600 dark:bg-cyan-400 animate-bounce ${uiStyle === "pixel" ? "w-2 h-2 pixel-border" : "w-1.5 h-1.5 rounded-full"
-                              }`}
-                            style={{ animationDelay: "0.1s" }}
-                          />
-                          <div
-                            className={`bg-cyan-600 dark:bg-cyan-400 animate-bounce ${uiStyle === "pixel" ? "w-2 h-2 pixel-border" : "w-1.5 h-1.5 rounded-full"
-                              }`}
-                            style={{ animationDelay: "0.2s" }}
-                          />
+                      {message.role === "user" ? (
+                        <div className="text-sm break-words">{message.content}</div>
+                      ) : (
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                          <ReactMarkdown components={MarkdownComponents}>{message.content}</ReactMarkdown>
                         </div>
-                        <span
-                          className={`text-xs text-gray-700 dark:text-gray-400 ${uiStyle === "pixel" ? "pixel-font" : ""}`}
-                        >
-                          {uiStyle === "pixel" ? "RADHIKA IS PROCESSING..." : "Radhika is thinking..."}
-                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`text-[10px] sm:text-xs text-gray-600 dark:text-gray-500 mt-0.5 sm:mt-1 ${message.role === "user" ? "text-right" : "text-left"}`}
+                    >
+                      {formatTime(message.createdAt ? new Date(message.createdAt).getTime() : Date.now())}
+                    </div>
+                  </div>
+                  {message.role === "user" && (
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {isLoading && (
+              <div className="flex space-x-2 sm:space-x-3">
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-lg ${currentMode.bg} ${currentMode.border} border flex items-center justify-center shadow-lg ${currentMode.glow}`}
+                >
+                  <CurrentModeIcon className={`w-5 h-5 ${currentMode.color} animate-pulse`} />
+                </div>
+                <div className="flex-1">
+                  <div className="bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 px-3 py-2 rounded-2xl">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex space-x-1">
+                        <div className="w-1.5 h-1.5 bg-cyan-600 dark:bg-cyan-400 rounded-full animate-bounce" />
+                        <div
+                          className="w-1.5 h-1.5 bg-cyan-600 dark:bg-cyan-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        />
+                        <div
+                          className="w-1.5 h-1.5 bg-cyan-600 dark:bg-cyan-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        />
                       </div>
+                      <span className="text-xs text-gray-700 dark:text-gray-400">Sahiti is thinking...</span>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-            <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
+          <div ref={messagesEndRef} />
+        </div>
 
-          {/* Input */}
-          <div
-            className={`flex-shrink-0 p-2 sm:p-4 ${uiStyle === "pixel"
-              ? "bg-gray-200 dark:bg-gray-800 border-t-4 border-gray-400 dark:border-gray-600"
-              : "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-cyan-500/20"
-              }`}
-          >
-            <div className="max-w-4xl mx-auto">
-              <form onSubmit={handleSubmit} className="relative">
-                <Textarea
-                  value={input}
-                  onChange={handleInputChange}
-                  placeholder={uiStyle === "pixel" ? `> ${currentMode.placeholder}` : currentMode.placeholder}
-                  className={`min-h-[50px] sm:min-h-[60px] max-h-32 resize-none text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-500 focus:ring-0 pr-20 sm:pr-24 text-base sm:text-lg leading-relaxed ${uiStyle === "pixel"
-                    ? "bg-gray-100 dark:bg-gray-900 border-4 border-gray-400 dark:border-gray-600 focus:border-cyan-500 dark:focus:border-cyan-400 pixel-font pixel-border"
-                    : "bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border-gray-300 dark:border-gray-700/50 focus:border-cyan-500/50"
-                    }`}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSubmit(e as any)
-                    }
-                  }}
-                />
-                <div className="absolute right-1.5 bottom-1.5 flex items-center space-x-1">
-                  {isSpeaking && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={stopSpeaking}
-                      className={`text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-2 ${uiStyle === "pixel"
-                        ? "hover:bg-red-200 dark:hover:bg-red-900/30 border-2 border-red-400 dark:border-red-600 pixel-border"
-                        : "hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl"
-                        }`}
-                    >
-                      <VolumeX className="w-4 h-4" />
-                    </Button>
-                  )}
+        {/* Chat Input */}
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-cyan-500/20 p-2 sm:p-4">
+          <div className="max-w-4xl mx-auto">
+            <form onSubmit={handleSubmit} className="relative">
+              <Textarea
+                value={input}
+                onChange={handleInputChange}
+                placeholder={currentMode.placeholder}
+                className="min-h-[40px] sm:min-h-[50px] max-h-28 resize-none bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border-gray-300 dark:border-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-500 focus:border-cyan-500/50 focus:ring-0 pr-20 sm:pr-24 text-xs sm:text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSubmit(e as any)
+                  }
+                }}
+              />
+              <div className="absolute right-1.5 bottom-1.5 flex items-center space-x-1">
+                {isSpeaking && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={handleVoiceInput}
-                    className={`p-2 transition-all duration-200 ${isListening
-                      ? `text-red-700 dark:text-red-400 animate-pulse ${uiStyle === "pixel"
-                        ? "bg-red-200 dark:bg-red-900/30 hover:bg-red-300 dark:hover:bg-red-800/40 border-4 border-red-400 dark:border-red-600 pixel-border"
-                        : "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl"
-                      }`
-                      : `text-gray-600 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 ${uiStyle === "pixel"
-                        ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-4 border-gray-400 dark:border-gray-600 pixel-border"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-xl"
-                      }`
-                      }`}
-                    disabled={isLoading}
+                    onClick={stopSpeaking}
+                    className="text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 p-2 rounded-xl"
                   >
-                    {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    <VolumeX className="w-4 h-4" />
                   </Button>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={isLoading || !input.trim()}
-                    className={`bg-gradient-to-r ${currentMode.gradient} hover:opacity-90 text-white p-2 shadow-lg ${currentMode.glow} disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-xl ${uiStyle === "pixel" ? `border-4 ${currentMode.borderPixel} pixel-border` : "rounded-xl"
-                      }`}
-                  >
-                    <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </Button>
-                </div>
-              </form>
-
-              {/* Model selector */}
-              <div
-                className={`flex items-center justify-between mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-500 ${uiStyle === "pixel" ? "pixel-font" : ""
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleVoiceInput}
+                  className={`rounded-xl p-2 transition-all duration-200 ${
+                    isListening
+                      ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 animate-pulse"
+                      : "text-gray-600 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                   }`}
-              >
-                <span className="hidden sm:inline">
-                  {uiStyle === "pixel"
-                    ? "[ENTER] = SEND | [SHIFT+ENTER] = NEW LINE"
-                    : "Press Enter to send, Shift+Enter for new line"}
-                </span>
-                <span className="sm:hidden">{uiStyle === "pixel" ? "[TAP TO SEND]" : "Tap to send"}</span>
+                  disabled={isLoading}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isLoading || !input.trim()}
+                  className={`bg-gradient-to-r ${currentMode.gradient} hover:opacity-90 text-white rounded-xl p-2 shadow-lg ${currentMode.glow} disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-xl`}
+                >
+                  <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </div>
+            </form>
 
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <span className={`${currentMode.color} font-medium ${uiStyle === "pixel" ? "font-bold" : ""}`}>
-                      {uiStyle === "pixel" ? currentMode.label.toUpperCase() : currentMode.label}
-                    </span>
-                  </div>
+            {/* Model selector */}
+            <div className="flex items-center justify-between mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-500">
+              <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
+              <span className="sm:hidden">Tap to send</span>
 
-                  <div
-                    className={`flex items-center space-x-2 pl-3 ${uiStyle === "pixel"
-                      ? "border-l-2 border-gray-400 dark:border-gray-600"
-                      : "border-l border-gray-300 dark:border-gray-700"
-                      }`}
-                  >
-                    <Cpu className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <span className={`${currentMode.color} font-medium`}>{currentMode.label}</span>
+                </div>
 
-                    {/* Custom Provider Dropdown */}
-                    <div className="relative" data-provider-menu="true">
-                      <button
-                        onClick={() => setIsProviderMenuOpen(!isProviderMenuOpen)}
-                        className={`h-6 px-2 text-xs flex items-center gap-1 font-medium transition-colors ${uiStyle === "pixel"
-                          ? "hover:bg-gray-300 dark:hover:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 pixel-border font-bold"
-                          : "rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                          }`}
-                      >
-                        <span
-                          className={`${provider === "groq"
-                            ? "text-pink-700 dark:text-pink-400"
+                <div className="flex items-center space-x-2 border-l border-gray-300 dark:border-gray-700 pl-3">
+                  <Cpu className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+
+                  {/* Custom Provider Dropdown */}
+                  <div className="relative" data-provider-menu="true">
+                    <button
+                      onClick={() => setIsProviderMenuOpen(!isProviderMenuOpen)}
+                      className="h-6 px-2 text-xs flex items-center gap-1 font-medium rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <span
+                        className={`${
+                          provider === "groq"
+                            ? "text-cyan-700 dark:text-cyan-400"
                             : provider === "gemini"
                               ? "text-emerald-700 dark:text-emerald-400"
                               : provider === "openai"
                                 ? "text-violet-700 dark:text-violet-400"
                                 : "text-orange-700 dark:text-orange-400"
-                            }`}
-                        >
-                          {uiStyle === "pixel" ? PROVIDERS[provider].name.toUpperCase() : PROVIDERS[provider].name}
-                        </span>
-                        <ChevronDown className="w-3 h-3" />
-                      </button>
+                        }`}
+                      >
+                        {PROVIDERS[provider].name}
+                      </span>
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
 
-                      {isProviderMenuOpen && (
-                        <div
-                          className={`absolute right-0 bottom-full mb-1 w-40 py-1 z-50 ${uiStyle === "pixel"
-                            ? "bg-gray-200 dark:bg-gray-800 border-4 border-gray-400 dark:border-gray-600 pixel-border"
-                            : "bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700"
-                            }`}
-                        >
-                          {Object.entries(PROVIDERS).map(([key, providerData]) => (
-                            <button
-                              key={key}
-                              onClick={() => handleProviderChange(key as Provider)}
-                              className={`flex items-center justify-between w-full px-3 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "pixel-font" : ""
-                                }`}
-                            >
-                              <span className={`${key === provider ? "font-medium" : ""}`}>
-                                {uiStyle === "pixel" ? providerData.name.toUpperCase() : providerData.name}
-                              </span>
-                              {key === provider ? (
-                                <Check className="w-3 h-3" />
-                              ) : (
-                                providerData.requiresApiKey &&
-                                ((key === "openai" && !apiKeys.openai) || (key === "claude" && !apiKeys.claude)) && (
-                                  <Key className="w-3 h-3 text-gray-400" />
-                                )
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {isProviderMenuOpen && (
+                      <div className="absolute right-0 bottom-full mb-1 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                        {Object.entries(PROVIDERS).map(([key, providerData]) => (
+                          <button
+                            key={key}
+                            onClick={() => handleProviderChange(key as Provider)}
+                            className="flex items-center justify-between w-full px-3 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          >
+                            <span className={`${key === provider ? "font-medium" : ""}`}>{providerData.name}</span>
+                            {key === provider ? (
+                              <Check className="w-3 h-3" />
+                            ) : (
+                              providerData.requiresApiKey &&
+                              ((key === "openai" && !apiKeys.openai) || (key === "claude" && !apiKeys.claude)) && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Key className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Setup {providerData.name} API Key</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label htmlFor="apiKey">API Key</Label>
+                                        <Input
+                                          id="apiKey"
+                                          type="password"
+                                          placeholder={`Enter your ${providerData.name} API key`}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                              const target = e.target as HTMLInputElement
+                                              if (target.value.trim()) {
+                                                handleApiKeySetup(key, target.value.trim())
+                                                target.value = ""
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                      <Button
+                                        onClick={(e) => {
+                                          const input = (e.target as HTMLElement)
+                                            .closest(".space-y-4")
+                                            ?.querySelector("input") as HTMLInputElement
+                                          if (input?.value.trim()) {
+                                            handleApiKeySetup(key, input.value.trim())
+                                            input.value = ""
+                                          }
+                                        }}
+                                        className="w-full"
+                                      >
+                                        Save API Key
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              )
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Right Sidebar - Activity Matrix */}
-        <div
-          className={`hidden xl:flex w-80 flex-col ${uiStyle === "pixel"
-            ? "bg-gray-200 dark:bg-gray-800 border-l-4 border-gray-400 dark:border-gray-600"
-            : "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-l border-gray-200 dark:border-cyan-500/20"
-            }`}
-        >
-          <div
-            className={`p-6 ${uiStyle === "pixel" ? "max-h-[80vh]  pr-2" : ""
-              }`}
-          >
-            <ActivityMatrix messages={messages} currentMode={mode} />
-          </div>
-
-        </div>
       </div>
 
-      {/* API Key Dialog */}
-      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
-        <DialogContent
-          className={`w-[calc(100%-2rem)] max-w-md sm:w-full sm:mx-auto px-4 py-6 sm:px-6 sm:py-8 ${uiStyle === "pixel"
-              ? "bg-gray-200 dark:bg-gray-800 border-4 border-gray-400 dark:border-gray-600 pixel-border rounded-none"
-              : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg"
-            }`}
-        >
-          <DialogHeader>
-            <DialogTitle
-              className={`text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "pixel-font font-bold" : ""}`}
-            >
-              {uiStyle === "pixel"
-                ? `${PROVIDERS[selectedProvider]?.name.toUpperCase()} API KEY REQUIRED`
-                : `Enter ${PROVIDERS[selectedProvider]?.name} API Key`}
-            </DialogTitle>
-            <DialogDescription
-              className={`text-gray-600 dark:text-gray-400 ${uiStyle === "pixel" ? "pixel-font" : ""}`}
-            >
-              To use {PROVIDERS[selectedProvider]?.name}, please enter your API key. It will be stored securely in your
-              browser.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="api-key"
-                className={`text-sm font-medium text-gray-900 dark:text-gray-100 ${uiStyle === "pixel" ? "font-bold pixel-font" : ""
-                  }`}
-              >
-                {uiStyle === "pixel"
-                  ? `${PROVIDERS[selectedProvider]?.name.toUpperCase()} API KEY`
-                  : `${PROVIDERS[selectedProvider]?.name} API Key`}
-              </label>
-              <Input
-                id="api-key"
-                type="password"
-                placeholder={`Enter your ${PROVIDERS[selectedProvider]?.name} API key`}
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                className={`text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${uiStyle === "pixel"
-                  ? "bg-gray-100 dark:bg-gray-900 border-4 border-gray-400 dark:border-gray-600 pixel-font pixel-border"
-                  : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                  }`}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleSaveApiKey()
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsApiKeyDialogOpen(false)}
-              className={`text-gray-900 dark:text-gray-100 ${uiStyle === "pixel"
-                ? "border-4 border-gray-400 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 pixel-font pixel-border"
-                : "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-            >
-              {uiStyle === "pixel" ? "CANCEL" : "Cancel"}
-            </Button>
-            <Button
-              onClick={handleSaveApiKey}
-              disabled={!tempApiKey.trim()}
-              className={`text-white ${uiStyle === "pixel"
-                ? "bg-cyan-600 hover:bg-cyan-700 pixel-font font-bold border-4 border-cyan-400 pixel-border"
-                : "bg-cyan-600 hover:bg-cyan-700"
-                }`}
-            >
-              {uiStyle === "pixel" ? "SAVE & SWITCH" : "Save & Switch"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
-        .pixel-font {
-          font-family: 'Press Start 2P', 'Courier New', monospace;
-          image-rendering: pixelated;
-          image-rendering: -moz-crisp-edges;
-          image-rendering: crisp-edges;
-        }
-        
-        .pixel-border {
-          border-style: solid;
-          image-rendering: pixelated;
-          image-rendering: -moz-crisp-edges;
-          image-rendering: crisp-edges;
-        }
-        
-        /* Remove all rounded corners for pixel perfect look */
-        .pixel-font * {
-          border-radius: 0 !important;
-        }
-        
-        .scrollbar-thin {
-          scrollbar-width: thin;
-        }
-        .scrollbar-thumb-gray-400 {
-          scrollbar-color: #9ca3af transparent;
-        }
-        .dark .scrollbar-thumb-gray-500 {
-          scrollbar-color: #6b7280 transparent;
-        }
-        .scrollbar-track-transparent {
-          scrollbar-track-color: transparent;
-        }
-        
-        /* Webkit scrollbar styles */
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 2px;
-          height: 2px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background-color: #9ca3af;
-          border-radius: 1px;
-        }
-        .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-          background-color: #6b7280;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background-color: #6b7280;
-        }
-        .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background-color: #9ca3af;
-        }
-        
-        /* Pixel button effects */
-        .pixel-font button:active {
-          transform: translateY(2px);
-        }
-        
-        /* Remove focus rings and add pixel borders */
-        .pixel-font *:focus {
-          outline: none !important;
-          box-shadow: none !important;
-        }
-        
-        /* Pixel-perfect animations */
-        @keyframes pixelBounce {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-4px); }
-        }
-        
-        .pixel-font .animate-bounce {
-          animation: pixelBounce 1s infinite;
-        }
-      `}</style>
+      <Toaster />
     </div>
-    <Analytics />
-    <SpeedInsights />
-    </>
   )
 }

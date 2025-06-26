@@ -1,6 +1,6 @@
-# RADHIKA - AI Assistant
+# SAHITI - AI Assistant
 
-**RADHIKA (Adaptive Reasoning & Intelligence Assistant)** is a next-generation AI chat application that provides specialized assistance across six distinct modes: General, Productivity, Wellness, Learning, Creative, and BFF.
+**SAHITI (Adaptive Reasoning & Intelligence Assistant)** is a next-generation AI chat application that provides specialized assistance across six distinct modes: General, Productivity, Wellness, Learning, Creative, and BFF.
 
 ## Key Highlights
 
@@ -25,4 +25,3 @@ Next.js 14 • Vercel AI SDK • Multiple LLM Providers • Three.js • Tailwin
 - **BFF**: Emotional support, casual chats, GenZ-friendly interactions
 
 Perfect for users who need a versatile AI assistant that adapts to different contexts, maintains conversation history across specialized domains, and provides an engaging visual experience with advanced voice capabilities.
-
