@@ -247,7 +247,7 @@ const PROVIDERS = {
   },
 }
 
-export default function Home() {
+function HomePage() {
   const [mode, setMode] = useState<Mode>("general")
   const [provider, setProvider] = useState<Provider>("groq")
   const [darkMode, setDarkMode] = useState(false)
@@ -1031,3 +1031,5 @@ export default function Home() {
     </div>
   )
 }
+
+export default HomePage
