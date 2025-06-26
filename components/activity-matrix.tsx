@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import * as THREE from "three"
 import { Activity, MessageSquare, Clock, Zap, Brain } from "lucide-react"
 
 interface ActivityMatrixProps {
@@ -10,11 +9,6 @@ interface ActivityMatrixProps {
 }
 
 export function ActivityMatrix({ messages = [], currentMode = "general" }: ActivityMatrixProps) {
-  const mountRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const networkRef = useRef<THREE.Group | null>(null)
-  const animationRef = useRef<number | null>(null)
   const [stats, setStats] = useState({
     totalMessages: 0,
     avgResponseTime: 0,
@@ -36,94 +30,6 @@ export function ActivityMatrix({ messages = [], currentMode = "general" }: Activ
       sessionsToday,
     })
   }, [messages, currentMode])
-
-  useEffect(() => {
-    if (!mountRef.current) return
-
-    // Scene setup
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
-
-    renderer.setSize(150, 150)
-    renderer.setClearColor(0x000000, 0)
-    mountRef.current.appendChild(renderer.domElement)
-
-    // Create neural network visualization
-    const networkGroup = new THREE.Group()
-
-    // Create nodes
-    const nodeGeometry = new THREE.SphereGeometry(0.05, 8, 8)
-    const nodeMaterial = new THREE.MeshBasicMaterial({
-      color: 0x0080ff, // Brighter blue for light mode visibility
-      transparent: true,
-      opacity: 0.9, // Higher opacity for better visibility
-    })
-
-    // Create connections between nodes
-    const positions = []
-    for (let i = 0; i < 20; i++) {
-      const node = new THREE.Mesh(nodeGeometry, nodeMaterial)
-      const angle = (i / 20) * Math.PI * 2
-      const radius = 0.8 + Math.random() * 0.4
-      node.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 0.5, Math.sin(angle) * radius)
-      networkGroup.add(node)
-      positions.push(node.position)
-    }
-
-    // Create connections
-    const lineGeometry = new THREE.BufferGeometry()
-    const linePositions = []
-    for (let i = 0; i < positions.length; i++) {
-      for (let j = i + 1; j < positions.length; j++) {
-        if (Math.random() > 0.7) {
-          // Only some connections
-          linePositions.push(positions[i].x, positions[i].y, positions[i].z)
-          linePositions.push(positions[j].x, positions[j].y, positions[j].z)
-        }
-      }
-    }
-
-    lineGeometry.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3))
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x0080ff, // Brighter blue for light mode visibility
-      transparent: true,
-      opacity: 0.6, // Higher opacity for better visibility
-    })
-    const lines = new THREE.LineSegments(lineGeometry, lineMaterial)
-    networkGroup.add(lines)
-
-    scene.add(networkGroup)
-    camera.position.z = 2
-
-    sceneRef.current = scene
-    rendererRef.current = renderer
-    networkRef.current = networkGroup
-
-    // Animation loop
-    const animate = () => {
-      animationRef.current = requestAnimationFrame(animate)
-
-      if (networkGroup) {
-        networkGroup.rotation.y += 0.005
-        networkGroup.rotation.x += 0.002
-      }
-
-      renderer.render(scene, camera)
-    }
-
-    animate()
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement)
-      }
-      renderer.dispose()
-    }
-  }, [])
 
   // Mode usage data based on current session
   const modeUsage = [
@@ -161,13 +67,6 @@ export function ActivityMatrix({ messages = [], currentMode = "general" }: Activ
           <Activity className="w-4 h-4 mr-2" />
           AI Activity Matrix
         </h3>
-
-        <div className="flex justify-center mb-4">
-          <div
-            ref={mountRef}
-            className="w-36 h-36 rounded-lg border border-cyan-500/30 bg-gradient-to-br from-gray-100/50 to-white/50 dark:from-cyan-950/20 dark:to-blue-950/20 backdrop-blur-sm"
-          />
-        </div>
       </div>
 
       {/* Real-time Stats */}

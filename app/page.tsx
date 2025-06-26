@@ -491,12 +491,12 @@ export default function Home() {
         <div className="p-6 border-b border-gray-200 dark:border-cyan-500/20">
           <div className="flex items-center space-x-4">
             <div
-              className={`w-12 h-12 bg-gradient-to-br ${currentMode.gradient} rounded-2xl flex items-center justify-center shadow-lg ${currentMode.glow} shadow-2xl transform transition-all duration-300 hover:scale-105 animate-pulse`}
+              className={`w-12 h-12 bg-gradient-to-br ${currentMode.gradient} rounded-2xl flex items-center justify-center shadow-lg ${currentMode.glow} shadow-2xl transform transition-all duration-300 hover:scale-105`}
             >
-              <Sparkles className="w-6 h-6 text-white animate-spin" style={{ animationDuration: '3s' }} />
+              <Sparkles className="w-6 h-6 text-white" style={{ animationDuration: '3s' }} />
             </div>
             <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent animate-pulse">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
                 SAHITI
               </h1>
               <p className="text-xs text-gray-600 dark:text-gray-400">Futuristic AI Assistant</p>
@@ -695,9 +695,6 @@ export default function Home() {
             {messages.length === 0 && (
               <>
                 <div className="text-center py-6 sm:py-10">
-                  <div className="mb-8">
-                    <AIVisualization mode={mode} isActive={isLoading || isListening} />
-                  </div>
                   <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                     {mode === "bff"
                       ? "Hey bestie! What's on your mind? 💕"
