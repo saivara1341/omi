@@ -260,6 +260,7 @@ export default function Home() {
     creative: [],
     bff: [],
   })
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesByModeRef = useRef(messagesByMode)
@@ -286,7 +287,7 @@ export default function Home() {
 
   // Load saved data on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !isInitialized) {
       // Load dark mode preference
       const savedDarkMode = localStorage.getItem("darkMode")
       if (savedDarkMode) {
@@ -323,28 +324,35 @@ export default function Home() {
       })
 
       setMessagesByMode(savedMessages)
+      setIsInitialized(true)
     }
-  }, [setVoiceEnabled])
+  }, [setVoiceEnabled, isInitialized])
 
   // Apply dark mode
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
+    if (isInitialized) {
+      if (darkMode) {
+        document.documentElement.classList.add("dark")
+      } else {
+        document.documentElement.classList.remove("dark")
+      }
+      localStorage.setItem("darkMode", JSON.stringify(darkMode))
     }
-    localStorage.setItem("darkMode", JSON.stringify(darkMode))
-  }, [darkMode])
+  }, [darkMode, isInitialized])
 
   // Save voice preference
   useEffect(() => {
-    localStorage.setItem("voiceEnabled", JSON.stringify(voiceEnabled))
-  }, [voiceEnabled])
+    if (isInitialized) {
+      localStorage.setItem("voiceEnabled", JSON.stringify(voiceEnabled))
+    }
+  }, [voiceEnabled, isInitialized])
 
   // Save API keys
   useEffect(() => {
-    localStorage.setItem("apiKeys", JSON.stringify(apiKeys))
-  }, [apiKeys])
+    if (isInitialized) {
+      localStorage.setItem("apiKeys", JSON.stringify(apiKeys))
+    }
+  }, [apiKeys, isInitialized])
 
   // Chat configuration
   const chatConfig = useMemo(
@@ -374,15 +382,17 @@ export default function Home() {
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat(chatConfig)
 
-  // Load messages for current mode (only when mode changes)
+  // Load messages for current mode (only when mode changes and initialized)
   useEffect(() => {
-    const currentMessages = messagesByModeRef.current[mode]
-    setMessages(currentMessages)
-  }, [mode, setMessages])
+    if (isInitialized) {
+      const currentMessages = messagesByModeRef.current[mode]
+      setMessages(currentMessages)
+    }
+  }, [mode, setMessages, isInitialized])
 
   // Save messages when they change
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && isInitialized) {
       const updatedMessagesByMode = {
         ...messagesByModeRef.current,
         [mode]: messages,
@@ -390,7 +400,7 @@ export default function Home() {
       setMessagesByMode(updatedMessagesByMode)
       localStorage.setItem(`messages_${mode}`, JSON.stringify(messages))
     }
-  }, [messages, mode])
+  }, [messages, mode, isInitialized])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -476,6 +486,18 @@ export default function Home() {
   const handleApiKeySetup = (provider: string, apiKey: string) => {
     setApiKeys((prev) => ({ ...prev, [provider]: apiKey }))
     toast.success(`${PROVIDERS[provider as Provider].name} API key saved successfully!`)
+  }
+
+  // Don't render until initialized to prevent hydration issues
+  if (!isInitialized) {
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-950 items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading SAHITI...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
