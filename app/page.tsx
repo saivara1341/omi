@@ -376,11 +376,38 @@ export default function Home() {
       },
       onError: (error: Error) => {
         console.error("Chat error details:", error)
-        const errorMessage = error.message || "Failed to send message. Please try again."
+        
+        // Try to parse the error response for better error messages
+        let errorMessage = error.message || "Failed to send message. Please try again."
+        
+        try {
+          // Check if the error message contains JSON with more details
+          if (errorMessage.includes('{')) {
+            const jsonStart = errorMessage.indexOf('{')
+            const jsonStr = errorMessage.substring(jsonStart)
+            const errorData = JSON.parse(jsonStr)
+            if (errorData.error) {
+              errorMessage = errorData.error
+              if (errorData.details) {
+                errorMessage += ` ${errorData.details}`
+              }
+            }
+          }
+        } catch (parseError) {
+          // If parsing fails, use the original error message
+        }
+
         setError(errorMessage)
 
-        if (errorMessage.includes("API configuration error") || errorMessage.includes("API key")) {
-          setError(`${errorMessage} Please set up your ${PROVIDERS[provider].name} API key.`)
+        // Show specific guidance for API key errors
+        if (errorMessage.includes("API key") || errorMessage.includes("authentication") || errorMessage.includes("401")) {
+          toast.error("API Key Required", {
+            description: `Please set up your ${PROVIDERS[provider].name} API key in the settings to continue.`,
+            action: {
+              label: "Open Settings",
+              onClick: () => setIsApiKeyDialogOpen(true)
+            }
+          })
         }
       },
     }),
@@ -744,18 +771,33 @@ export default function Home() {
 
         {/* Error Display */}
         {(error || speechError) && (
-          <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800/50 px-3 sm:px-6 py-2">
-            <div className="flex items-center space-x-2 text-red-800 dark:text-red-400">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <p className="text-sm flex-1">{error || speechError}</p>
+          <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800/50 px-3 sm:px-6 py-3">
+            <div className="flex items-start space-x-3 text-red-800 dark:text-red-400">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{error || speechError}</p>
+                {(error?.includes("API key") || error?.includes("authentication")) && (
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsApiKeyDialogOpen(true)}
+                      className="text-red-800 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
+                    >
+                      <Settings className="w-3 h-3 mr-1" />
+                      Open API Settings
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearError}
-                className="ml-auto text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 flex-shrink-0"
+                className="text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 flex-shrink-0"
                 title="Dismiss error"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </Button>
             </div>
           </div>

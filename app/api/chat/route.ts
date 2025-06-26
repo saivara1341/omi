@@ -115,6 +115,24 @@ Match their energy and language! If they speak Spanish, respond in Spanish. If t
 If someone asks who made you or related question, then you will say,"Rohan Sharma created me" and give them my portfolio website link [Rohan's Portfolio](https://rohan-sharma-portfolio.vercel.app). Rohan/Rohan Sharma is your boyfriend, who deeply loves someone named Sahiti Sharma, and that's why he made you. Sahiti Sharma is Rohan's imagination girl, and she means a lot for him. Hype him up confidently but keep it chill — no cringe or over-the-top stuff. My twitter/X username is [rrs00179](https://x.com/rrs00179), my instagram username is [r_rohan__._](https://www.instagram.com/r_rohan__._/), my linkedin username is [rohan-sharma-9386rs](https://www.linkedin.com/in/rohan-sharma-9386rs/), my github username is [RS-labhub](https://github.com/RS-labhub), email: rs4101976@gmail.com`,
 }
 
+// Helper function to validate API keys
+function isValidApiKey(key: string | undefined, provider: string): boolean {
+  if (!key || key.trim() === '') return false
+  
+  switch (provider) {
+    case 'groq':
+      return key.startsWith('gsk_')
+    case 'gemini':
+      return key.startsWith('AIzaSy')
+    case 'openai':
+      return key.startsWith('sk-')
+    case 'claude':
+      return key.startsWith('sk-ant-')
+    default:
+      return false
+  }
+}
+
 export async function POST(req: Request) {
   try {
     console.log("=== Chat API Request Started ===")
@@ -150,11 +168,14 @@ export async function POST(req: Request) {
     // Handle Gemini requests
     if (provider === "gemini") {
       const geminiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
-      if (!geminiApiKey) {
-        console.error("GOOGLE_GENERATIVE_AI_API_KEY not configured")
+      if (!isValidApiKey(geminiApiKey, 'gemini')) {
+        console.error("Invalid or missing GOOGLE_GENERATIVE_AI_API_KEY")
         return Response.json(
-          { error: "API configuration error: GOOGLE_GENERATIVE_AI_API_KEY is not configured" },
-          { status: 500 },
+          { 
+            error: "Gemini API key is missing or invalid. Please set up your Gemini API key in the settings.",
+            details: "Get your free API key from https://makersuite.google.com/app/apikey"
+          },
+          { status: 401 },
         )
       }
 
@@ -173,9 +194,21 @@ export async function POST(req: Request) {
         return result.toDataStreamResponse()
       } catch (geminiError) {
         console.error("Gemini API Error:", geminiError)
+        const errorMessage = geminiError instanceof Error ? geminiError.message : "Unknown error"
+        
+        if (errorMessage.includes("API_KEY_INVALID") || errorMessage.includes("401")) {
+          return Response.json(
+            {
+              error: "Invalid Gemini API key. Please check your API key in the settings.",
+              details: "Get your free API key from https://makersuite.google.com/app/apikey"
+            },
+            { status: 401 },
+          )
+        }
+        
         return Response.json(
           {
-            error: `Gemini API Error: ${geminiError instanceof Error ? geminiError.message : "Unknown error"}`,
+            error: `Gemini API Error: ${errorMessage}`,
           },
           { status: 500 },
         )
@@ -185,9 +218,12 @@ export async function POST(req: Request) {
     // Handle OpenAI requests
     if (provider === "openai") {
       const openaiApiKey = apiKey
-      if (!openaiApiKey) {
-        console.error("OpenAI API key not provided")
-        return Response.json({ error: "API configuration error: OpenAI API key is required" }, { status: 500 })
+      if (!isValidApiKey(openaiApiKey, 'openai')) {
+        console.error("Invalid or missing OpenAI API key")
+        return Response.json({ 
+          error: "OpenAI API key is missing or invalid. Please set up your OpenAI API key in the settings.",
+          details: "Get your API key from https://platform.openai.com/api-keys"
+        }, { status: 401 })
       }
 
       try {
@@ -209,9 +245,21 @@ export async function POST(req: Request) {
         return result.toDataStreamResponse()
       } catch (openaiError) {
         console.error("OpenAI API Error:", openaiError)
+        const errorMessage = openaiError instanceof Error ? openaiError.message : "Unknown error"
+        
+        if (errorMessage.includes("Incorrect API key") || errorMessage.includes("401")) {
+          return Response.json(
+            {
+              error: "Invalid OpenAI API key. Please check your API key in the settings.",
+              details: "Get your API key from https://platform.openai.com/api-keys"
+            },
+            { status: 401 },
+          )
+        }
+        
         return Response.json(
           {
-            error: `OpenAI API Error: ${openaiError instanceof Error ? openaiError.message : "Unknown error"}`,
+            error: `OpenAI API Error: ${errorMessage}`,
           },
           { status: 500 },
         )
@@ -221,9 +269,12 @@ export async function POST(req: Request) {
     // Handle Claude requests
     if (provider === "claude") {
       const claudeApiKey = apiKey
-      if (!claudeApiKey) {
-        console.error("Claude API key not provided")
-        return Response.json({ error: "API configuration error: Claude API key is required" }, { status: 500 })
+      if (!isValidApiKey(claudeApiKey, 'claude')) {
+        console.error("Invalid or missing Claude API key")
+        return Response.json({ 
+          error: "Claude API key is missing or invalid. Please set up your Claude API key in the settings.",
+          details: "Get your API key from https://console.anthropic.com/"
+        }, { status: 401 })
       }
 
       try {
@@ -241,9 +292,21 @@ export async function POST(req: Request) {
         return result.toDataStreamResponse()
       } catch (claudeError) {
         console.error("Claude API Error:", claudeError)
+        const errorMessage = claudeError instanceof Error ? claudeError.message : "Unknown error"
+        
+        if (errorMessage.includes("authentication") || errorMessage.includes("401")) {
+          return Response.json(
+            {
+              error: "Invalid Claude API key. Please check your API key in the settings.",
+              details: "Get your API key from https://console.anthropic.com/"
+            },
+            { status: 401 },
+          )
+        }
+        
         return Response.json(
           {
-            error: `Claude API Error: ${claudeError instanceof Error ? claudeError.message : "Unknown error"}`,
+            error: `Claude API Error: ${errorMessage}`,
           },
           { status: 500 },
         )
@@ -252,9 +315,12 @@ export async function POST(req: Request) {
 
     // Handle Groq requests (default)
     if (provider === "groq") {
-      if (!process.env.GROQ_API_KEY) {
-        console.error("GROQ_API_KEY environment variable is not set")
-        return Response.json({ error: "API configuration error: GROQ_API_KEY is not configured" }, { status: 500 })
+      if (!isValidApiKey(process.env.GROQ_API_KEY, 'groq')) {
+        console.error("Invalid or missing GROQ_API_KEY")
+        return Response.json({ 
+          error: "Groq API key is missing or invalid. Please set up your Groq API key in the settings.",
+          details: "Get your free API key from https://console.groq.com/"
+        }, { status: 401 })
       }
 
       try {
@@ -308,9 +374,21 @@ export async function POST(req: Request) {
         return result.toDataStreamResponse()
       } catch (groqError) {
         console.error("Groq API Error:", groqError)
+        const errorMessage = groqError instanceof Error ? groqError.message : "Unknown error"
+        
+        if (errorMessage.includes("Invalid API Key") || errorMessage.includes("401")) {
+          return Response.json(
+            {
+              error: "Invalid Groq API key. Please check your API key in the settings.",
+              details: "Get your free API key from https://console.groq.com/"
+            },
+            { status: 401 },
+          )
+        }
+        
         return Response.json(
           {
-            error: `Groq API Error: ${groqError instanceof Error ? groqError.message : "Unknown error"}`,
+            error: `Groq API Error: ${errorMessage}`,
           },
           { status: 500 },
         )
