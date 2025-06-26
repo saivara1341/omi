@@ -262,8 +262,14 @@ export default function Home() {
   })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesByModeRef = useRef(messagesByMode)
   const currentMode = MODES[mode]
   const CurrentModeIcon = currentMode.icon
+
+  // Update ref whenever messagesByMode changes
+  useEffect(() => {
+    messagesByModeRef.current = messagesByMode
+  }, [messagesByMode])
 
   // Speech functionality
   const {
@@ -368,25 +374,23 @@ export default function Home() {
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat(chatConfig)
 
-  // Sync messages with mode-specific storage
+  // Load messages for current mode (only when mode changes)
   useEffect(() => {
-    const currentMessages = messagesByMode[mode]
-    if (currentMessages.length !== messages.length) {
-      setMessages(currentMessages)
-    }
-  }, [mode, messagesByMode, messages.length, setMessages])
+    const currentMessages = messagesByModeRef.current[mode]
+    setMessages(currentMessages)
+  }, [mode, setMessages])
 
   // Save messages when they change
   useEffect(() => {
     if (messages.length > 0) {
       const updatedMessagesByMode = {
-        ...messagesByMode,
+        ...messagesByModeRef.current,
         [mode]: messages,
       }
       setMessagesByMode(updatedMessagesByMode)
       localStorage.setItem(`messages_${mode}`, JSON.stringify(messages))
     }
-  }, [messages, mode, messagesByMode])
+  }, [messages, mode])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -449,13 +453,13 @@ export default function Home() {
     if (window.confirm("Are you sure you want to clear this chat? This action cannot be undone.")) {
       setMessages([])
       const updatedMessagesByMode = {
-        ...messagesByMode,
+        ...messagesByModeRef.current,
         [mode]: [],
       }
       setMessagesByMode(updatedMessagesByMode)
       localStorage.removeItem(`messages_${mode}`)
     }
-  }, [setMessages, messagesByMode, mode])
+  }, [setMessages, mode])
 
   // Clear error
   const clearError = useCallback(() => {
