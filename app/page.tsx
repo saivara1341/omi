@@ -374,119 +374,86 @@ function HomePage() {
             ? { apiKey: apiKeys.claude }
             : {}),
       },
-      onError: async (error: Error) => {
+      onError: (error: Error) => {
         console.error("Chat error details:", error)
         
-        // Try to extract detailed error information from the AI SDK error
         let errorMessage = "Failed to send message. Please try again."
         let suggestedAction = null
-        let availableProviders = null
+        let availableProviders: string[] = []
         
-        try {
-          // First, check if error.cause exists and contains a Response object
-          if (error.cause && typeof error.cause === 'object') {
-            // If error.cause is a Response object, try to extract JSON
-            if (error.cause instanceof Response) {
-              try {
-                const errorData = await error.cause.json()
-                if (errorData.error) {
-                  errorMessage = errorData.error
-                  if (errorData.details) {
-                    errorMessage += ` ${errorData.details}`
-                  }
-                  suggestedAction = errorData.suggestedAction
-                  availableProviders = errorData.availableProviders
-                }
-              } catch (jsonError) {
-                console.warn("Could not parse Response as JSON:", jsonError)
-              }
-            }
-            // If error.cause has a message property, try to parse it as JSON
-            else if ('message' in error.cause && typeof error.cause.message === 'string') {
-              try {
-                const errorData = JSON.parse(error.cause.message)
-                if (errorData.error) {
-                  errorMessage = errorData.error
-                  if (errorData.details) {
-                    errorMessage += ` ${errorData.details}`
-                  }
-                  suggestedAction = errorData.suggestedAction
-                  availableProviders = errorData.availableProviders
-                }
-              } catch (parseError) {
-                // If parsing fails, use the raw message
-                errorMessage = error.cause.message
-              }
-            }
-          }
-          
-          // If no detailed error from cause, try parsing error.message
-          if (errorMessage === "Failed to send message. Please try again." && error.message) {
-            try {
-              // Try to parse the entire error message as JSON
-              const errorData = JSON.parse(error.message)
-              if (errorData.error) {
-                errorMessage = errorData.error
-                if (errorData.details) {
-                  errorMessage += ` ${errorData.details}`
-                }
-                suggestedAction = errorData.suggestedAction
-                availableProviders = errorData.availableProviders
-              }
-            } catch (parseError) {
-              try {
-                // If that fails, try to extract JSON substring by finding the first { and last }
-                const firstBrace = error.message.indexOf('{')
-                const lastBrace = error.message.lastIndexOf('}')
-                
-                if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                  const jsonStr = error.message.substring(firstBrace, lastBrace + 1)
-                  const errorData = JSON.parse(jsonStr)
-                  if (errorData.error) {
-                    errorMessage = errorData.error
-                    if (errorData.details) {
-                      errorMessage += ` ${errorData.details}`
-                    }
-                    suggestedAction = errorData.suggestedAction
-                    availableProviders = errorData.availableProviders
-                  }
-                }
-              } catch (secondParseError) {
-                // If both parsing attempts fail, use the original error message or a fallback
-                errorMessage = error.message || "Failed to send message. Please try again."
-              }
-            }
-          }
-        } catch (generalError) {
-          console.warn("Error while processing error details:", generalError)
-          errorMessage = error.message || "Failed to send message. Please try again."
+        // Handle generic errors first
+        if (error.message === "An error occurred." || error.message === "Failed to fetch" || error.message.includes("fetch")) {
+          errorMessage = "Connection failed. Please check your internet connection or try a different AI provider."
+          suggestedAction = "check_network_or_api_keys"
+          availableProviders = ["groq", "gemini"]
+        }
+        // Handle API key related errors
+        else if (error.message.includes("API key") || error.message.includes("authentication") || error.message.includes("401") || error.message.includes("unauthorized")) {
+          errorMessage = `${PROVIDERS[provider].name} API key is missing or invalid.`
+          suggestedAction = "setup_api_key"
+          availableProviders = Object.entries(PROVIDERS)
+            .filter(([key, data]) => !data.requiresApiKey)
+            .map(([key]) => key)
+        }
+        // Handle rate limiting
+        else if (error.message.includes("rate limit") || error.message.includes("429")) {
+          errorMessage = `${PROVIDERS[provider].name} rate limit exceeded. Please try again later or switch providers.`
+          suggestedAction = "switch_provider"
+          availableProviders = Object.entries(PROVIDERS)
+            .filter(([key]) => key !== provider)
+            .map(([key]) => key)
+        }
+        // Handle server errors
+        else if (error.message.includes("500") || error.message.includes("502") || error.message.includes("503")) {
+          errorMessage = `${PROVIDERS[provider].name} is currently unavailable. Please try a different provider.`
+          suggestedAction = "switch_provider"
+          availableProviders = Object.entries(PROVIDERS)
+            .filter(([key]) => key !== provider)
+            .map(([key]) => key)
+        }
+        // Use the original error message if it's more specific
+        else if (error.message && error.message !== "An error occurred.") {
+          errorMessage = error.message
         }
 
         setError(errorMessage)
 
-        // Show specific guidance for API key errors
-        if (errorMessage.includes("API key") || errorMessage.includes("authentication") || errorMessage.includes("401")) {
-          if (availableProviders && availableProviders.length > 0) {
-            toast.error("API Key Missing", {
-              description: `Try switching to: ${availableProviders.join(', ')} or set up your ${PROVIDERS[provider].name} API key.`,
-              action: {
-                label: "Open Settings",
-                onClick: () => setIsApiKeyDialogOpen(true)
+        // Show appropriate toast based on error type
+        if (suggestedAction === "setup_api_key") {
+          toast.error("API Key Required", {
+            description: errorMessage,
+            action: {
+              label: "Setup API Keys",
+              onClick: () => setIsApiKeyDialogOpen(true)
+            }
+          })
+        } else if (suggestedAction === "switch_provider" && availableProviders.length > 0) {
+          toast.error("Provider Issue", {
+            description: `${errorMessage} Try: ${availableProviders.map(p => PROVIDERS[p as Provider].name).join(', ')}`,
+            action: {
+              label: "Switch Provider",
+              onClick: () => {
+                // Switch to the first available provider
+                setProvider(availableProviders[0] as Provider)
               }
-            })
-          } else {
-            toast.error("API Key Required", {
-              description: `Please set up your ${PROVIDERS[provider].name} API key in the settings to continue.`,
-              action: {
-                label: "Open Settings",
-                onClick: () => setIsApiKeyDialogOpen(true)
-              }
-            })
-          }
+            }
+          })
+        } else if (suggestedAction === "check_network_or_api_keys") {
+          toast.error("Connection Failed", {
+            description: errorMessage,
+            action: {
+              label: "Check Settings",
+              onClick: () => setIsApiKeyDialogOpen(true)
+            }
+          })
+        } else {
+          toast.error("Error", {
+            description: errorMessage
+          })
         }
       },
     }),
-    [mode, provider, apiKeys.openai, apiKeys.claude],
+    [mode, provider, apiKeys.openai, apiKeys.claude, setIsApiKeyDialogOpen, setProvider],
   )
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat(chatConfig)
