@@ -374,34 +374,57 @@ function HomePage() {
             ? { apiKey: apiKeys.claude }
             : {}),
       },
-      onError: (error: Error) => {
+      onError: async (error: Error) => {
         console.error("Chat error details:", error)
         
-        // Try to parse the error response for better error messages
-        let errorMessage = error.message || "Failed to send message. Please try again."
+        // Try to extract detailed error information from the AI SDK error
+        let errorMessage = "Failed to send message. Please try again."
         let suggestedAction = null
         let availableProviders = null
         
         try {
-          // First, try to parse the entire error message as JSON
-          const errorData = JSON.parse(errorMessage)
-          if (errorData.error) {
-            errorMessage = errorData.error
-            if (errorData.details) {
-              errorMessage += ` ${errorData.details}`
+          // First, check if error.cause exists and contains a Response object
+          if (error.cause && typeof error.cause === 'object') {
+            // If error.cause is a Response object, try to extract JSON
+            if (error.cause instanceof Response) {
+              try {
+                const errorData = await error.cause.json()
+                if (errorData.error) {
+                  errorMessage = errorData.error
+                  if (errorData.details) {
+                    errorMessage += ` ${errorData.details}`
+                  }
+                  suggestedAction = errorData.suggestedAction
+                  availableProviders = errorData.availableProviders
+                }
+              } catch (jsonError) {
+                console.warn("Could not parse Response as JSON:", jsonError)
+              }
             }
-            suggestedAction = errorData.suggestedAction
-            availableProviders = errorData.availableProviders
+            // If error.cause has a message property, try to parse it as JSON
+            else if ('message' in error.cause && typeof error.cause.message === 'string') {
+              try {
+                const errorData = JSON.parse(error.cause.message)
+                if (errorData.error) {
+                  errorMessage = errorData.error
+                  if (errorData.details) {
+                    errorMessage += ` ${errorData.details}`
+                  }
+                  suggestedAction = errorData.suggestedAction
+                  availableProviders = errorData.availableProviders
+                }
+              } catch (parseError) {
+                // If parsing fails, use the raw message
+                errorMessage = error.cause.message
+              }
+            }
           }
-        } catch (parseError) {
-          try {
-            // If that fails, try to extract JSON substring by finding the first { and last }
-            const firstBrace = errorMessage.indexOf('{')
-            const lastBrace = errorMessage.lastIndexOf('}')
-            
-            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-              const jsonStr = errorMessage.substring(firstBrace, lastBrace + 1)
-              const errorData = JSON.parse(jsonStr)
+          
+          // If no detailed error from cause, try parsing error.message
+          if (errorMessage === "Failed to send message. Please try again." && error.message) {
+            try {
+              // Try to parse the entire error message as JSON
+              const errorData = JSON.parse(error.message)
               if (errorData.error) {
                 errorMessage = errorData.error
                 if (errorData.details) {
@@ -410,11 +433,33 @@ function HomePage() {
                 suggestedAction = errorData.suggestedAction
                 availableProviders = errorData.availableProviders
               }
+            } catch (parseError) {
+              try {
+                // If that fails, try to extract JSON substring by finding the first { and last }
+                const firstBrace = error.message.indexOf('{')
+                const lastBrace = error.message.lastIndexOf('}')
+                
+                if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                  const jsonStr = error.message.substring(firstBrace, lastBrace + 1)
+                  const errorData = JSON.parse(jsonStr)
+                  if (errorData.error) {
+                    errorMessage = errorData.error
+                    if (errorData.details) {
+                      errorMessage += ` ${errorData.details}`
+                    }
+                    suggestedAction = errorData.suggestedAction
+                    availableProviders = errorData.availableProviders
+                  }
+                }
+              } catch (secondParseError) {
+                // If both parsing attempts fail, use the original error message or a fallback
+                errorMessage = error.message || "Failed to send message. Please try again."
+              }
             }
-          } catch (secondParseError) {
-            // If both parsing attempts fail, use the original error message
-            console.warn("Could not parse error message as JSON:", secondParseError)
           }
+        } catch (generalError) {
+          console.warn("Error while processing error details:", generalError)
+          errorMessage = error.message || "Failed to send message. Please try again."
         }
 
         setError(errorMessage)
