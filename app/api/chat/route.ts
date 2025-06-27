@@ -15,8 +15,8 @@ const groq = createOpenAI({
 const MODELS = {
   groq: {
     fast: "llama-3.1-8b-instant", // Quick responses, casual chat
-    reasoning: "llama-3.3-70b-versatile", // Complex analysis, problem-solving
-    creative: "qwen/qwen3-32b", // Creative tasks, brainstorming  
+    reasoning: "llama-3.1-70b-versatile", // Complex analysis, problem-solving
+    creative: "mixtral-8x7b-32768", // Creative tasks, brainstorming  
   },
   gemini: {
     default: "gemini-2.0-flash",
